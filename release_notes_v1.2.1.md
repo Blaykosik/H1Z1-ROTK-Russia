@@ -44,12 +44,21 @@ Version **v1.2.1** is a critical hotfix addressing process isolation, installati
 
 ---
 
+## Security & Verification / Безопасность и проверка
+
+* 📖 **[Security, Trust & Anti-Cheat Architecture (EN)](https://github.com/Blaykosik/H1Z1-ROTK-Russia/blob/main/docs/SECURITY_AND_TRUST.md)**
+* 📖 **[Безопасность, прозрачность и античит (RU)](https://github.com/Blaykosik/H1Z1-ROTK-Russia/blob/main/docs/SECURITY_AND_TRUST_RU.md)**
+* 🔍 **[Binary Provenance & Upstream Verification Table](https://github.com/Blaykosik/H1Z1-ROTK-Russia/blob/main/BINARY_PROVENANCE.md)**
+* 📋 **[Official SHA256SUMS.txt](https://github.com/Blaykosik/H1Z1-ROTK-Russia/blob/main/SHA256SUMS.txt)**
+
+---
+
 ## Verification & Checksums
 
 ### Release Archive
 | File | SHA-256 Checksum |
 | :--- | :--- |
-| `H1Z1-ROTK-Russia-v1.2.1.zip` | `8B274866C3BD80A83EC283AFEB994CFC3024270AD68BA477BDA94A8223708A12` |
+| `H1Z1-ROTK-Russia-v1.2.1.zip` | `3254258C51FC11BDBC4098BA1E4D9EA1994C6F56C04A009BD94E56E7379622C4` |
 
 ### Bundled Upstream Binaries (Verified Authentic)
 | Binary | SHA-256 Checksum |

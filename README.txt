@@ -62,10 +62,22 @@ produced a much steadier connection with substantially reduced jitter (~55–61 
 меньше скачков и стабильные ~55–61 мс во время тестов.
 
 ----------------------------------------------------------------------
-ANTI-CHEAT / АНТИЧИТ:
-The project does not inject into H1Z1, modify game memory, patch game files,
-or interact with BattlEye. It has been successfully tested in live ROTK gameplay.
-Future anti-cheat policy changes cannot be guaranteed.
+SECURITY, TRUST & VERIFICATION / БЕЗОПАСНОСТЬ И ПРОВЕРКА:
+- Not a cheat or injector: does not touch game memory, files, or BattlEye.
+- Game-specific zapret/winws profile with narrow ROTK UDP filter scope.
+- Zero telemetry, zero credentials, no remote servers, no hidden web calls.
+- Verify archive SHA-256 via PowerShell:
+  Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
+
+- Не чит и не инжектор: не трогает память, файлы игры и не вмешивается в BattlEye.
+- Узкий профиль zapret/winws исключительно для UDP-трафика серверов ROTK.
+- Ноль телеметрии, ноль сбора паролей, нет своих серверов или скрытых запросов.
+- Проверить хеш архива через PowerShell:
+  Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
+
+Security & Provenance Docs:
+https://github.com/Blaykosik/H1Z1-ROTK-Russia/blob/main/docs/SECURITY_AND_TRUST.md
+https://github.com/Blaykosik/H1Z1-ROTK-Russia/blob/main/BINARY_PROVENANCE.md
 
 ----------------------------------------------------------------------
 Documentation & GitHub:

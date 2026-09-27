@@ -39,6 +39,7 @@ Copy-Item "$repoRoot\scripts\watcher.ps1"  -Destination "$runtimeDir\watcher.ps1
 Copy-Item "$repoRoot\config\filter.txt"    -Destination "$runtimeDir\filter.txt"
 Copy-Item "$repoRoot\UNINSTALL_AUTO.cmd"   -Destination "$runtimeDir\UNINSTALL_AUTO.cmd"
 Copy-Item "$repoRoot\STATUS.cmd"           -Destination "$runtimeDir\STATUS.cmd"
+Copy-Item "$repoRoot\BINARY_PROVENANCE.md" -Destination "$runtimeDir\BINARY_PROVENANCE.md"
 
 # Create release-specific rotk_winws.conf pointing directly to @filter.txt in current folder
 $confContent = @(

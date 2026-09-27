@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enhanced Status Diagnostics**:
   - `STATUS.cmd` accurately distinguishes between the project's managed bypass instance and third-party `winws` instances (e.g. YouTube/Discord zapret), reporting external instances as `DETECTED [PID: ..., not managed]` without interfering with them.
 
+### Added
+- **Security & Trust Framework**:
+  - `docs/SECURITY_AND_TRUST.md` & `docs/SECURITY_AND_TRUST_RU.md`: Comprehensive security architecture guide covering BattlEye anti-cheat boundaries, antivirus/Defender false positive heuristics, and complete absence of hidden network activity.
+  - `BINARY_PROVENANCE.md`: Complete provenance verification table comparing bundled binaries against upstream official releases, documenting RFC 5389 origin of `stun.bin`, and providing step-by-step PowerShell verification commands.
+  - Prominent "Security & Trust / Это безопасно?" sections added to `README.md`, `README_RU.md`, and `README.txt`.
+
 ### Changed
 - **Documentation Accuracy**:
   - Corrected packet-filtering description: replaced absolute "exactly 12 packets" claim with empirical observation of UDP flow cessation shortly after initial handshake (clarified that 12 packets was observed in synthetic probe tests).

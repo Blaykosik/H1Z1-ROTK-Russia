@@ -20,16 +20,30 @@ This causes:
 
 ---
 
-## What This Project Is NOT
+## Security & Trust (Is It Safe?)
 
-- ❌ **Not a VPN** — Your public IP address is unchanged; traffic does not route through any remote VPS or relay.
-- ❌ **Not a proxy** — No SOCKS5, HTTP, or VLESS tunneling is involved.
-- ❌ **Not a cheat or hack** — It does not alter game memory, mechanics, hitboxes, or gameplay.
-- ❌ **No game file modifications** — `H1Z1.exe`, game files, and launcher binaries remain 100% original.
-- ❌ **No anti-cheat interference** — Does not touch, hook, or bypass BattlEye anti-cheat.
+**H1Z1 ROTK Russia** is a narrow network DPI-bypass configuration for H1Z1 ROTK, built on open-source components: **zapret** (`winws`) and **WinDivert**.
 
-> [!NOTE]
-> **Anti-Cheat Disclaimer**: The project does not inject into H1Z1, modify game memory, patch game files, or interact with BattlEye. It has been successfully tested in live ROTK gameplay. Future anti-cheat policy changes cannot be guaranteed.
+The project does not inject into the game process, does not modify `H1Z1.exe`, does not read or write game memory, does not alter game files, and does not interact with the BattlEye API. It operates exclusively at the Windows network stack level and processes only pre-filtered ROTK UDP traffic.
+
+If you are familiar with zapret for YouTube/Discord: this project uses the same technology class and the same `winws`/WinDivert engine, configured as a game-specific zapret/winws profile strictly tailored for H1Z1 ROTK.
+
+The project:
+* ❌ **Not a cheat or injector**: Does not read or write game memory; no aimbot, wallhack, or hitbox modification.
+* ❌ **Not a VPN or proxy**: Does not change your public IP; does not route traffic through third-party servers.
+* ❌ **No game file modifications**: `H1Z1.exe`, game assets, and launcher binaries remain 100% original.
+* ❌ **Zero telemetry**: Collects no analytics, no user statistics, and sends no data anywhere.
+* ❌ **Zero credential access**: Never inspects, handles, or stores login tokens, passwords, or Steam session tickets.
+* ❌ **No hidden web activity**: Scripts contain zero HTTP/HTTPS requests, no auto-updater, and no remote backend.
+
+### BattlEye & Anti-Cheat Disclosure
+The project does not inject into H1Z1, does not modify game memory or files, and is not designed to bypass BattlEye. It has been successfully tested in live ROTK gameplay. According to the [official BattlEye FAQ](https://www.battleye.com/support/faq/), bans are generally applied for actual cheats/hacks or software specifically designed to bypass BattlEye protection. Incompatible third-party software may be blocked or result in a kick, which is not in itself a ban. However, we cannot guarantee future policy changes by BattlEye or ROTK and strictly refuse to give false marketing claims like "100% ban safe".
+
+### Why Antiviruses May Flag This
+WinDivert operates as a kernel-level packet filter driver, and `winws` modifies network packet headers. Security software heuristics often categorize raw packet tools generically as `RiskTool`, `PUA`, or `HackTool` (upstream zapret explicitly documents this). We never ask users to blindly disable antivirus protection; instead, we provide tools to verify all hashes and inspect source scripts before adding any targeted folder exclusion.
+
+📖 **[Full Security & Trust Guide & Code Audit →](docs/SECURITY_AND_TRUST.md)**  
+🔍 **[Binary Provenance & Upstream Hash Verification →](BINARY_PROVENANCE.md)**
 
 ---
 
@@ -130,6 +144,8 @@ Scripts require administrator privileges because **WinDivert** functions as a ke
 
 ## Documentation
 
+- [Security, Trust & Anti-Cheat Architecture](docs/SECURITY_AND_TRUST.md)
+- [Binary Provenance & Upstream Hashes](BINARY_PROVENANCE.md)
 - [Technical Architecture: How It Works](docs/HOW_IT_WORKS.md)
 - [Empirical Findings & Measurement Matrix](docs/TECHNICAL_FINDINGS.md)
 - [Troubleshooting & FAQ](docs/TROUBLESHOOTING.md)
