@@ -1,0 +1,100 @@
+name: Bug Report
+description: Report a connectivity issue or unexpected behavior with the bypass
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ### ⚠️ CRITICAL PRIVACY & SECURITY WARNING
+        **DO NOT POST ANY SENSITIVE DATA IN THIS REPORT:**
+        - **NO** Passwords or account credentials
+        - **NO** Session IDs, auth tokens, or login tickets
+        - **NO** Player keys or character GUIDs
+        - **NO** VPN/VLESS configs or personal cryptographic keys
+        - **NO** Full unedited game log files
+        
+        Only provide the destination IP and UDP port if known.
+
+  - type: input
+    id: os_version
+    attributes:
+      label: Windows Version
+      description: e.g. Windows 11 23H2 or Windows 10 22H2
+      placeholder: Windows 11 Pro 64-bit
+    validations:
+      required: true
+
+  - type: input
+    id: isp_name
+    attributes:
+      label: Internet Service Provider (ISP)
+      description: Your ISP and approximate city/region
+      placeholder: Beeline (Moscow)
+    validations:
+      required: true
+
+  - type: input
+    id: rotk_version
+    attributes:
+      label: ROTK Launcher / Game Version
+      placeholder: Latest ROTK Live
+    validations:
+      required: false
+
+  - type: dropdown
+    id: lobby_status
+    attributes:
+      label: Does the Lobby / Title Screen Open?
+      options:
+        - "Yes, connects normally"
+        - "No, hangs or disconnects at login"
+        - "Region shows low quality / unavailable"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: match_status
+    attributes:
+      label: Does the Match Load?
+      options:
+        - "Yes, loads and plays normally"
+        - "No, hangs on loading screen / Waiting for world ready"
+        - "Disconnects immediately after zone entry"
+        - "Did not test yet"
+    validations:
+      required: true
+
+  - type: input
+    id: ping_observed
+    attributes:
+      label: Approximate In-Game Ping (ms)
+      placeholder: 55-60 ms
+    validations:
+      required: false
+
+  - type: input
+    id: endpoint_info
+    attributes:
+      label: Endpoint IP & Port (if known from logs)
+      description: Destination IP address and UDP port from NetInfo.log or H1Z1 PlayClient (Live).log
+      placeholder: 162.19.126.xxx:20xxx
+    validations:
+      required: false
+
+  - type: input
+    id: project_version
+    attributes:
+      label: Project Version
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: safe_logs
+    attributes:
+      label: Diagnostic Details (Safe Lines Only)
+      description: Only paste lines containing destination IPs/ports or error descriptions. Strip all tickets, tokens, and GUIDs!
+      render: text
+    validations:
+      required: false
