@@ -85,7 +85,7 @@ Documentation & Source Code / Документация и исходный ко�
 https://github.com/Blaykosik/H1Z1-ROTK-Russia
 ======================================================================
 "@
-Set-Content -Path "$stageDir\README.txt" -Value $readmeTxt -Encoding utf8
+[System.IO.File]::WriteAllText("$stageDir\README.txt", $readmeTxt, [System.Text.Encoding]::UTF8)
 
 # 4. Copy runtime binaries and scripts into _runtime/
 Write-Host "[*] Copying binaries and runtime files into _runtime/..."
