@@ -1,0 +1,28 @@
+# Temporary & Runtime status files
+*.log
+*.tmp
+*.bak
+*.swp
+*.pid
+.winws.pid
+
+# Network captures & diagnostics
+*.pcap
+*.pcapng
+*.etl
+*.csv
+
+# Python byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Operating system files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Release archives
+*.zip

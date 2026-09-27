@@ -1,0 +1,13 @@
+Cygwin POSIX Emulation Library (cygwin1.dll)
+
+Copyright (C) Red Hat, Inc. and Cygwin Contributors.
+Upstream project: https://cygwin.com/
+Upstream source repository: https://sourceware.org/git/newlib-cygwin.git
+
+The Cygwin API library (cygwin1.dll) is licensed under the terms of the GNU Lesser General Public License (LGPL), version 3 or later:
+https://www.gnu.org/licenses/lgpl-3.0.html
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
