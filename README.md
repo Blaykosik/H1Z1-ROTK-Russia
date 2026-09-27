@@ -60,7 +60,7 @@ Verify the download checksum in PowerShell:
 ```powershell
 Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
 ```
-Expected SHA-256: `3254258C51FC11BDBC4098BA1E4D9EA1994C6F56C04A009BD94E56E7379622C4`
+Expected SHA-256: `6387F5A7D79904E790BD3C28E89D9F36E16B822069955CAE577EC6FA9EC462A3`
 
 ---
 
@@ -79,7 +79,7 @@ Auto Mode installs the runtime to `%ProgramData%\H1Z1-ROTK-Russia` and sets up a
 ---
 
 ## Manual Mode (Portable)
-Manual Mode does not install anything and makes no system changes:
+Manual Mode does not install persistent components. WinDivert is loaded temporarily while the bypass is active and is unloaded when the bypass stops:
 1. Right-click **`START.cmd`** and select **Run as administrator**.
 2. Launch ROTK normally and play.
 3. When finished, press any key in the `START` console window or run **`STOP.cmd`** to unload the filter.
@@ -98,7 +98,7 @@ Run **`STATUS.cmd`** at any time to inspect:
 ---
 
 ## How It Works
-The connection flow operates entirely on your local Windows network stack:
+The project applies a STUN-based desynchronization strategy to the initial ROTK UDP packets. On the tested connection, this prevents the observed UDP flow interruption while the actual game traffic continues directly to the ROTK servers:
 
 ```
 H1Z1.exe (Game Client)
@@ -106,7 +106,7 @@ H1Z1.exe (Game Client)
   ├──► [1] WinDivert driver intercepts outbound UDP to ROTK server
   │    └── winws injects dummy RFC 5389 STUN Binding Request prefix (stun.bin) on datagram #1
   │
-  ├──► [2] Intermediate ISP inspection registers recognized STUN header; flow is not terminated
+  ├──► [2] Initial STUN-based desync packet sent; flow remains uninterrupted on tested route
   │
   ├──► [3] ROTK Server receives datagrams:
   │    ├── Ignores unrecognized STUN datagram
@@ -130,13 +130,13 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 
 * **Login & Gateway**: `162.19.94.95` (ports `20042-20045`, `20140-20141`)
 * **Dynamic Match Server Pool**: `162.19.126.0/24` (ports `20000 - 23000`)
-* **What is NOT touched**: 100% of non-ROTK traffic (Discord, Steam downloads, web browsers, DNS, other games) is excluded from the filter.
+* **What is excluded**: Traffic outside the configured destination IP/protocol/port scope is excluded from this WinDivert filter (Discord, Steam, web browsers, DNS, other games).
 
 ---
 
 ## Performance & Latency
 Testing on direct physical Ethernet (Beeline Russia to OVH France):
-* **Direct Bypass (This Project)**: **~55–61 ms** steady latency, physical fiber route, zero packet loss, substantially reduced jitter.
+* **Direct Bypass (This Project)**: **~55–61 ms** steady latency, physical fiber route, substantially reduced jitter. No packet loss was observed during the tested gameplay sessions.
 * **Tunneling (VLESS / VPN)**: ~60–80 ms baseline with route jitter and periodic spikes up to 140–170 ms.
 
 ---
@@ -164,7 +164,7 @@ We believe in full transparency and verification rather than blind trust:
 * **Honest Disclosures**:
   * We do **not** make marketing claims like "100% ban safe" or "impossible to get banned".
   * We are **not** officially endorsed or approved by BattlEye Innovations or the ROTK team.
-  * Future heuristic updates or policy changes by anti-cheat developers cannot be guaranteed by any third party.
+  * Successfully tested in live ROTK gameplay, but future BattlEye/ROTK policies cannot be guaranteed.
 
 ---
 
@@ -180,7 +180,7 @@ Windows Defender or third-party antivirus software may occasionally flag `winws.
 ---
 
 ## Binary Provenance & Checksums
-All bundled binaries are **100% unmodified official upstream release builds** from [zapret-win-bundle](https://github.com/bol-van/zapret-win-bundle):
+All bundled third-party binaries are byte-for-byte unchanged from their documented upstream artifacts ([zapret-win-bundle](https://github.com/bol-van/zapret-win-bundle)). `stun.bin` is a project-owned static 100-byte STUN payload, not executable code:
 
 | File | Purpose | Upstream Source | Upstream Version | SHA-256 Checksum | Status |
 | :--- | :--- | :--- | :--- | :--- | :---: |
@@ -209,7 +209,7 @@ To completely remove Auto Mode:
 1. Right-click **`UNINSTALL_AUTO.cmd`** and select **Run as administrator** (from your extracted folder or from `%ProgramData%\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd`).
 2. The script unregisters the scheduled task, stops the watcher, terminates the bypass, and deletes `%ProgramData%\H1Z1-ROTK-Russia`.
 
-For Manual Mode, simply delete the downloaded folder. No system traces remain.
+For Manual Mode, simply delete the downloaded folder.
 
 ---
 
@@ -284,7 +284,7 @@ This project is an independent community compatibility utility. It is **not** af
 ```powershell
 Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
 ```
-Ожидаемый хэш SHA-256: `3254258C51FC11BDBC4098BA1E4D9EA1994C6F56C04A009BD94E56E7379622C4`
+Ожидаемый хэш SHA-256: `6387F5A7D79904E790BD3C28E89D9F36E16B822069955CAE577EC6FA9EC462A3`
 
 ---
 
@@ -304,7 +304,7 @@ Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
 ---
 
 ## Ручной режим (Портативный)
-Портативный режим ничего не устанавливает в систему и не создает задач в Планировщике:
+Ручной режим не устанавливает постоянные компоненты. WinDivert временно загружается на время работы обхода и выгружается после его остановки:
 1. Нажмите правой кнопкой мыши по **`START.cmd`** и выберите **«Запуск от имени администратора»**.
 2. Запустите лаунчер ROTK и заходите в игру.
 3. После завершения игры нажмите любую клавишу в окне `START` или запустите **`STOP.cmd`** для остановки фильтра.
@@ -323,7 +323,7 @@ Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
 ---
 
 ## Как это работает?
-Вся обработка происходит исключительно локально в сетевом стеке Windows:
+Проект применяет STUN-based desync-стратегию к начальным UDP-пакетам ROTK. На протестированном подключении этого достаточно, чтобы предотвратить наблюдаемый обрыв UDP-сессии, после чего игровой трафик продолжает идти напрямую к серверам ROTK:
 
 ```
 H1Z1.exe (Игровой клиент)
@@ -331,7 +331,7 @@ H1Z1.exe (Игровой клиент)
   ├──► [1] Драйвер WinDivert перехватывает исходящий UDP к серверам ROTK
   │    └── winws отправляет фиктивный префикс STUN Binding Request (stun.bin, RFC 5389)
   │
-  ├──► [2] Промежуточный DPI-фильтр классифицирует поток как STUN; сброс соединения не происходит
+  ├──► [2] Отправлен начальный desync-пакет; поток не обрывается на протестированном маршруте
   │
   ├──► [3] Сервер ROTK получает пакеты:
   │    ├── Игнорирует неизвестный ему STUN-пакет
@@ -355,13 +355,13 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 
 * **Логин и шлюз**: `162.19.94.95` (порты `20042-20045`, `20140-20141`)
 * **Пул динамических серверов матчей**: `162.19.126.0/24` (порты `20000 - 23000`)
-* **Что НЕ затрагивается**: весь остальной трафик ПК (Discord, загрузки Steam, браузеры, DNS, другие игры) полностью исключен из фильтра.
+* **Что не затрагивается**: Трафик, не соответствующий заданным IP-адресам, протоколу и диапазону портов, не попадает под этот WinDivert-фильтр (Discord, Steam, браузеры, DNS, другие игры).
 
 ---
 
 ## Сравнение задержки и стабильности
 Результаты тестирования на прямом оптоволокне (Билайн РФ до OVH Франция):
-* **Прямой обход (данный проект)**: стабильный пинг **~55–61 ms**, прямой физический маршрут, отсутствие скачков задержки и джиттера.
+* **Прямой обход (данный проект)**: стабильный пинг **~55–61 ms**, прямой физический маршрут, существенно меньше джиттера. Во время протестированных игровых сессий потери пакетов не наблюдались.
 * **Туннелирование (VLESS / VPN)**: базовый пинг ~60–80 ms с колебаниями и периодическими скачками задержки до 140–170 ms.
 
 ---
@@ -389,7 +389,7 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 * **Честная позиция**:
   * Мы **не** используем маркетинговые обещания вроде «100% защита от бана» или «бан невозможен».
   * Проект **не** имеет официального одобрения от BattlEye Innovations или команды ROTK.
-  * Любые будущие изменения политик разработчиков античитов не могут быть гарантированы сторонними разработчиками.
+  * Успешно протестировано в реальных матчах ROTK, однако будущие изменения политик BattlEye/ROTK не могут быть гарантированы.
 
 ---
 
@@ -405,7 +405,7 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 ---
 
 ## Происхождение бинарников и контрольные суммы
-Все исполняемые файлы взяты **без каких-либо изменений** из официального релизного репозитория [zapret-win-bundle](https://github.com/bol-van/zapret-win-bundle):
+Все сторонние бинарные файлы побайтово неизменны относительно задокументированных upstream-релизов ([zapret-win-bundle](https://github.com/bol-van/zapret-win-bundle)). `stun.bin` — собственный статический 100-байтовый STUN-пакет проекта, не являющийся исполняемым кодом:
 
 | Файл | Назначение | Источник (Upstream) | Версия | Хэш SHA-256 | Статус |
 | :--- | :--- | :--- | :--- | :--- | :---: |
