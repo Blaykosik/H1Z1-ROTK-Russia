@@ -7,13 +7,13 @@ This guide covers common issues, error messages, and solutions when running the 
 ## 1. "Administrator privileges are required"
 
 ### Symptom:
-When running `START.cmd`, a warning appears stating that administrator rights are missing.
+When running `START.cmd` or `INSTALL_AUTO.cmd`, a warning appears stating that administrator rights are missing.
 
 ### Cause:
-WinDivert is a Windows kernel driver. Intercepting outbound network packets requires administrative elevation.
+WinDivert is a Windows kernel driver. Intercepting outbound network packets and registering Windows scheduled tasks requires administrative elevation.
 
 ### Solution:
-1. Right-click `START.cmd` (or `scripts\start.cmd`).
+1. Right-click the `.cmd` file (e.g. `START.cmd` or `INSTALL_AUTO.cmd`).
 2. Select **Run as administrator**.
 3. Confirm the Windows User Account Control (UAC) prompt.
 
@@ -82,3 +82,20 @@ Different Russian regional operators or local sub-providers may configure interm
 If the bypass does not resolve connectivity on your ISP:
 1. Open an Issue on GitHub with the **Bug Report** template.
 2. Specify your **ISP name**, **region/city**, and the exact symptom observed.
+
+---
+
+## 5. Auto Mode Diagnostics & Troubleshooting (v1.2.0)
+
+### Checking Status:
+Double-click `STATUS.cmd` at any time to inspect:
+- **Auto Mode Task**: Shows whether the scheduled task is `INSTALLED [ENABLED]` or `NOT INSTALLED`.
+- **Auto Watcher**: Shows whether the background WMI monitor process is `RUNNING` and its PID.
+- **Game Process**: Detects whether `H1Z1.exe` is currently running.
+- **Bypass Status**: Shows whether `winws.exe` is `ACTIVE [PROTECTING]` or `INACTIVE`.
+- **Driver Service**: Displays kernel driver state (`RUNNING` or `STOPPED`).
+
+### Re-installing or Resetting Auto Mode:
+If you moved the folder to a different directory or updated the files:
+1. Right-click `UNINSTALL_AUTO.cmd` -> **Run as administrator**.
+2. Right-click `INSTALL_AUTO.cmd` -> **Run as administrator**.

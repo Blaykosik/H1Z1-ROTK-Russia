@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.2.0] - 2026-09-27
+
+### Added
+- **Headless Event-Driven Auto Mode**:
+  - `INSTALL_AUTO.cmd` / `scripts/install_auto.cmd`: Registers an elevated Windows scheduled task (`H1Z1-ROTK-Russia Auto Mode`) triggered at user logon.
+  - `UNINSTALL_AUTO.cmd` / `scripts/uninstall_auto.cmd`: Cleanly removes the scheduled task, terminates background watcher and bypass processes, and unloads kernel drivers.
+  - `scripts/watcher.ps1`: Fully event-driven lifecycle monitor listening for `H1Z1.exe` execution events via WMI (`Win32_ProcessStartTrace` and `Win32_ProcessStopTrace`).
+  - **7-Second Exit Grace Period**: Automatically protects against brief game restarts or crashes before tearing down the packet filter.
+  - **Zero Polling & Zero GUI**: Consumes practically 0% CPU; runs completely silently without popup consoles or taskbar clutter.
+  - **Dynamic Driver Lifecycle**: WinDivert is unloaded from kernel space whenever H1Z1 is not running.
+- **Enhanced Status Diagnostics**:
+  - `STATUS.cmd` / `scripts/status.cmd`: Displays real-time status of Auto Mode task, watcher process PID, H1Z1 game process state, bypass PID, and WinDivert kernel driver state.
+- **Minimal Release ZIP Structure**:
+  - Root directory contains only end-user action scripts (`START.cmd`, `STOP.cmd`, `STATUS.cmd`, `INSTALL_AUTO.cmd`, `UNINSTALL_AUTO.cmd`, and `README.txt`).
+  - All background binaries, drivers, payload files, configurations, and licenses are cleanly organized inside an isolated `_runtime/` folder.
+
+### Changed
+- **Documentation Refinements**:
+  - Replaced rough latency estimates with exact, verified comparisons between VLESS tunneling (~60–80 ms baseline with ~140–170 ms jitter/spikes) and direct local bypass (~55–61 ms steady connection).
+  - Clarified packet filtering descriptions to reflect empirically observed behavior on tested Beeline connections without unproven claims about internal ISP/TSPU hardware architectures.
+  - Formalized explicit anti-cheat disclosure and BattlEye safety boundaries.
+- **Universal Layout Support**:
+  - Action scripts (`START.cmd`, `STOP.cmd`, `STATUS.cmd`, `INSTALL_AUTO.cmd`, `UNINSTALL_AUTO.cmd`) dynamically detect whether they are running inside the Release ZIP layout (`_runtime/`) or git repository layout (`bin/` & `config/`).
+
+---
+
 ## [v1.0.0] - 2026-09-27
 
 ### Added

@@ -21,7 +21,7 @@ This document summarizes the empirical testing and network telemetry collected d
 | **BASE-LOGIN** | Native Direct (Login `162.19.94.95:20045`) | 50 | 3 | 94.0% | 1.14s | 1017.3 ms | 1116.6 ms | 87.4 ms | **Failure**: Cut off after initial replies. |
 | **BASE-GW** | Native Direct (Gateway `162.19.126.149:22225`) | 50 | 12 | 76.0% | 1.16s | 59.9 ms | 63.2 ms | 1.3 ms | **Failure**: Exactly 12 packets answered, then 100% drop. |
 | **BASE-MATCH** | Native Direct (Match `162.19.126.166:20214`) | 25 | 12 | 52.0% | 1.15s | 58.2 ms | 60.1 ms | 0.9 ms | **Failure**: Exactly 12 packets answered, matching the gateway pattern. |
-| **TEST-NON-OVH**| Control (Pine Hosting US, non-OVH) | 50 | 50 | **0.0%** | 5.08s | 159.9 ms | 168.1 ms | 1.3 ms | **Control Pass**: Confirms block is restricted to foreign OVH subnets. |
+| **TEST-NON-OVH**| Control (Pine Hosting US, non-OVH) | 50 | 50 | **0.0%** | 5.08s | 159.9 ms | 168.1 ms | 1.3 ms | **Control Pass**: Confirms restriction is specific to foreign OVH hosting subnets. |
 | **STRAT-BADSUM**| Fake packet with bad L4 checksum | 50 | 8 | 84.0% | 0.76s | 58.3 ms | 60.3 ms | 1.6 ms | **Failure**: Intermediate filter counted both real and fake datagrams. |
 | **STRAT-IPFRAG**| IPv4 fragmentation (`ipfrag-pos-udp=8`) | 50 | 1 | 98.0% | 0.05s | 61.3 ms | 61.3 ms | 0.0 ms | **Failure**: Intermediate firewalls drop trailing fragments lacking L4 headers. |
 | **RATE-1PPS** | Baseline probing at 1 packet/sec | 20 | 12 | 40.0% | 11.06s | 56.5 ms | 59.2 ms | 1.1 ms | **Key Finding**: Cutoff is a strict **12-packet counter**, not an idle timeout! |
@@ -45,3 +45,14 @@ Live testing with `H1Z1.exe` and ROTK Launcher confirmed:
    - Dynamic transfer to world instance (`162.19.126.166:20214`) executed seamlessly.
    - Successful loading screen completion and full zone entry (`GAMESTATE_PREGAME` and `GAMESTATE_RUNNING`).
    - Active gameplay sustained with zero desynchronization or sudden disconnections.
+
+---
+
+## 4. Latency & Jitter Comparison: Direct Bypass vs. Tunneling (VLESS)
+
+VLESS was playable and often stayed around roughly 60–80 ms, but the tunneled path introduced noticeable jitter and occasional latency spikes reaching approximately 140–170 ms on the tested setup. The direct local bypass keeps the native route and produced a much steadier ~55–61 ms connection.
+
+| Route Profile | Median Latency | Observed Spikes / Jitter | Gameplay Impact |
+| :--- | :---: | :---: | :--- |
+| **VLESS Tunneling** | ~60–80 ms | 140–170 ms spikes | Playable, but periodic desync / stutter |
+| **Native Direct Bypass** | **~55–61 ms** | **< 1.0 ms jitter** | 100% stable, physical fiber minimum |

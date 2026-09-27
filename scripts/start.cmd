@@ -22,31 +22,63 @@ pause
 exit /b 1
 
 :is_admin
-:: 2. Resolve repository directories via %~dp0
+:: 2. Resolve paths for either Release ZIP or Repository layout
 set "SCRIPT_DIR=%~dp0"
+if exist "%SCRIPT_DIR%_runtime\winws.exe" goto layout_root_release
+if exist "%SCRIPT_DIR%winws.exe" goto layout_runtime_folder
+if exist "%SCRIPT_DIR%scripts\start.cmd" goto layout_root_repo
+if exist "%SCRIPT_DIR%..\bin\winws.exe" goto layout_sub_repo
+
+:layout_runtime_folder
+set "ROOT_DIR=%SCRIPT_DIR%.."
+set "BIN_DIR=%SCRIPT_DIR%"
+set "CONFIG_DIR=%SCRIPT_DIR%"
+set "CONF_FILE=%CONFIG_DIR%\rotk_winws.conf"
+goto layout_resolved
+
+:layout_root_release
+set "ROOT_DIR=%SCRIPT_DIR%"
+set "BIN_DIR=%SCRIPT_DIR%_runtime"
+set "CONFIG_DIR=%SCRIPT_DIR%_runtime"
+set "CONF_FILE=%CONFIG_DIR%\rotk_winws.conf"
+goto layout_resolved
+
+:layout_root_repo
+set "ROOT_DIR=%SCRIPT_DIR%"
+set "BIN_DIR=%SCRIPT_DIR%bin"
+set "CONFIG_DIR=%SCRIPT_DIR%config"
+set "CONF_FILE=%CONFIG_DIR%\rotk_winws.conf"
+goto layout_resolved
+
+:layout_sub_repo
 pushd "%SCRIPT_DIR%.."
 set "ROOT_DIR=%CD%"
 popd
 set "BIN_DIR=%ROOT_DIR%\bin"
 set "CONFIG_DIR=%ROOT_DIR%\config"
+set "CONF_FILE=%CONFIG_DIR%\rotk_winws.conf"
+goto layout_resolved
+
+:layout_resolved
 set "PID_FILE=%BIN_DIR%\.winws.pid"
 
-title H1Z1 ROTK Russia - Direct UDP Bypass v1.0.0
+title H1Z1 ROTK Russia - Direct UDP Bypass v1.2.0
 color 0A
 
 :: 3. Verify presence of required runtime files
 set "MISSING="
-if not exist "%BIN_DIR%\winws.exe" set "MISSING=bin\winws.exe"
-if not exist "%BIN_DIR%\WinDivert.dll" set "MISSING=bin\WinDivert.dll"
-if not exist "%BIN_DIR%\WinDivert64.sys" set "MISSING=bin\WinDivert64.sys"
-if not exist "%BIN_DIR%\cygwin1.dll" set "MISSING=bin\cygwin1.dll"
-if not exist "%BIN_DIR%\stun.bin" set "MISSING=bin\stun.bin"
-if not exist "%CONFIG_DIR%\filter.txt" set "MISSING=config\filter.txt"
-if not exist "%CONFIG_DIR%\rotk_winws.conf" set "MISSING=config\rotk_winws.conf"
+if not exist "%BIN_DIR%\winws.exe" set "MISSING=winws.exe"
+if not exist "%BIN_DIR%\WinDivert.dll" set "MISSING=WinDivert.dll"
+if not exist "%BIN_DIR%\WinDivert64.sys" set "MISSING=WinDivert64.sys"
+if not exist "%BIN_DIR%\cygwin1.dll" set "MISSING=cygwin1.dll"
+if not exist "%BIN_DIR%\stun.bin" set "MISSING=stun.bin"
+if not exist "%CONFIG_DIR%\filter.txt" set "MISSING=filter.txt"
+if not exist "%CONF_FILE%" set "MISSING=rotk_winws.conf"
 
 if not defined MISSING goto check_existing_pid
 echo.
 echo [ERROR] Required runtime file is missing: %MISSING%
+echo Expected directory: %BIN_DIR%
 echo Please make sure you extracted the entire release archive.
 echo.
 pause
@@ -57,7 +89,7 @@ if not exist "%PID_FILE%" goto do_start
 for /f "usebackq delims=" %%P in ("%PID_FILE%") do set "EXISTING_PID=%%P"
 if not defined EXISTING_PID goto clear_old_pid
 
-powershell -NoProfile -Command "$p = Get-Process -Id %EXISTING_PID% -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*winws*' }; if ($p) { exit 0 } else { exit 1 }"
+powershell -NoProfile -Command "$p = Get-Process -Id %EXISTING_PID% -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*winws*' }; if ($null -ne $p) { exit 0 } else { exit 1 }"
 if %errorlevel% neq 0 goto clear_old_pid
 
 echo.
@@ -80,7 +112,7 @@ if exist "%PID_FILE%" del /f /q "%PID_FILE%" >nul 2>&1
 :do_start
 echo.
 echo ======================================================================
-echo           H1Z1 ROTK Russia - Direct UDP Bypass v1.0.0
+echo           H1Z1 ROTK Russia - Direct UDP Bypass v1.2.0
 echo ======================================================================
 echo.
 echo  [*] Target Scope:
@@ -94,7 +126,7 @@ echo  [*] Expected Latency  : ~55 - 61 ms [on tested ISP path]
 echo.
 echo  [*] Starting WinDivert filter...
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$proc = Start-Process -FilePath '%BIN_DIR%\winws.exe' -ArgumentList '@..\config\rotk_winws.conf' -WorkingDirectory '%BIN_DIR%' -WindowStyle Minimized -PassThru; $proc.Id | Out-File -FilePath '%PID_FILE%' -Encoding ascii"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$proc = Start-Process -FilePath '%BIN_DIR%\winws.exe' -ArgumentList '@%CONF_FILE%' -WorkingDirectory '%BIN_DIR%' -WindowStyle Minimized -PassThru; $proc.Id | Out-File -FilePath '%PID_FILE%' -Encoding ascii"
 
 ping 127.0.0.1 -n 3 >nul
 
@@ -102,7 +134,7 @@ if not exist "%PID_FILE%" goto start_failed
 for /f "usebackq delims=" %%P in ("%PID_FILE%") do set "NEW_PID=%%P"
 if not defined NEW_PID goto start_failed
 
-powershell -NoProfile -Command "$p = Get-Process -Id %NEW_PID% -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*winws*' }; if ($p) { exit 0 } else { exit 1 }"
+powershell -NoProfile -Command "$p = Get-Process -Id %NEW_PID% -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*winws*' }; if ($null -ne $p) { exit 0 } else { exit 1 }"
 if %errorlevel% neq 0 goto start_failed
 
 echo  [OK] Bypass filter is ACTIVE [PID: %NEW_PID%]
@@ -116,7 +148,19 @@ echo    - Close this window and run STOP.cmd when done.
 echo ----------------------------------------------------------------------
 echo.
 pause >nul
-call "%SCRIPT_DIR%stop.cmd"
+
+if exist "%SCRIPT_DIR%stop.cmd" (
+    call "%SCRIPT_DIR%stop.cmd"
+) else if exist "%ROOT_DIR%\STOP.cmd" (
+    call "%ROOT_DIR%\STOP.cmd"
+) else if exist "%SCRIPT_DIR%STOP.cmd" (
+    call "%SCRIPT_DIR%STOP.cmd"
+) else (
+    powershell -NoProfile -Command "Stop-Process -Id %NEW_PID% -Force -ErrorAction SilentlyContinue" >nul 2>&1
+    sc.exe stop windivert >nul 2>&1
+    sc.exe delete windivert >nul 2>&1
+    del /f /q "%PID_FILE%" >nul 2>&1
+)
 exit /b 0
 
 :start_failed

@@ -5,6 +5,11 @@
 *.swp
 *.pid
 .winws.pid
+.watcher.pid
+
+# Build & Stage directories
+dist/
+build/
 
 # Network captures & diagnostics
 *.pcap

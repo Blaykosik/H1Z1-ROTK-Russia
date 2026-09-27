@@ -9,14 +9,14 @@ Play with **native direct UDP** and low ping without VPNs, proxies, or remote re
 
 ## What It Solves
 
-On certain Russian internet providers (such as Beeline), direct UDP flows to ROTK game servers hosted on foreign datacenters (OVH) are cut off by deep packet inspection after an initial burst of ~12 packets.
+On tested Russian internet connections (specifically observed on Beeline), direct UDP flows to ROTK game servers hosted on foreign datacenters (OVH Western Europe) are terminated by intermediate provider packet filtering after an initial burst of ~12 packets.
 
 This causes:
 - The game launcher hanging during login or character loading;
 - Region selection reporting servers as "low quality" or "unavailable";
 - Loading into the lobby normally, but hanging indefinitely on "Waiting for world ready" when attempting to join a match.
 
-**H1Z1 ROTK Russia** resolves this locally on your Windows PC by applying a single-packet protocol desynchronization header to ROTK UDP handshakes. Your ISP's filter classifies the flow as authorized real-time communication (STUN/WebRTC), allowing the game traffic to flow **100% direct and unmodified** at native line speeds.
+**H1Z1 ROTK Russia** resolves this locally on your Windows PC by applying a single-packet protocol desynchronization header to ROTK UDP handshakes. The intermediate filter classifies the flow as authorized real-time communication (STUN/WebRTC), allowing subsequent game traffic to flow **100% direct and unmodified** at native line speeds.
 
 ---
 
@@ -28,21 +28,26 @@ This causes:
 - ❌ **No game file modifications** — `H1Z1.exe`, game files, and launcher binaries remain 100% original.
 - ❌ **No anti-cheat interference** — Does not touch, hook, or bypass BattlEye anti-cheat.
 
+> [!NOTE]
+> **Anti-Cheat Disclaimer**: The project does not inject into H1Z1, modify game memory, patch game files, or interact with BattlEye. It has been successfully tested in live ROTK gameplay. Future anti-cheat policy changes cannot be guaranteed.
+
 ---
 
-## Why Latency Stays Low
+## Latency & Routing Comparison
+
+VLESS was playable and often stayed around roughly 60–80 ms, but the tunneled path introduced noticeable jitter and occasional latency spikes reaching approximately 140–170 ms on the tested setup. The direct local bypass keeps the native route and produced a much steadier ~55–61 ms connection.
 
 ```
-WITHOUT THIS PROJECT (VPN / VLESS):
-H1Z1.exe ──► Remote VPN Server (e.g. Germany/Netherlands) ──► ROTK Server
-                     ▲ High ping (~140 - 170 ms), routing jitter, packet spikes
+TUNNELED ROUTE (VPN / VLESS):
+H1Z1.exe ──► Remote Tunnel Server (e.g. Germany/Netherlands) ──► ROTK Server
+             ▲ ~60–80 ms baseline with route jitter and latency spikes up to ~140–170 ms
 
-WITH THIS PROJECT (DIRECT UDP DESYNC):
-H1Z1.exe ──► Local WinDivert Filter ──► ISP (Beeline) ──► ROTK Server (Direct OVH)
-                     ▲ Native direct ping (~55 - 61 ms), zero routing overhead
+NATIVE DIRECT ROUTE WITH THIS PROJECT (LOCAL UDP DESYNC):
+H1Z1.exe ──► Local WinDivert Filter ──► Direct ISP Route ──► ROTK Server (OVH)
+             ▲ Native direct ping (~55–61 ms), steady connection, zero routing jitter
 ```
 
-Because traffic travels directly along your ISP's physical fiber route to the game server without detouring through third-party proxy nodes, ping remains at its true physical minimum.
+Because traffic travels directly along your physical ISP fiber route to the game server without detouring through third-party proxy nodes, latency remains at its physical minimum.
 
 ---
 
@@ -56,7 +61,7 @@ Tested and verified on live sessions:
 - **Gameplay**: Successful login, character creation, match queueing, and sustained in-match gameplay.
 
 > [!NOTE]
-> This workaround has been empirically proven on Beeline Russia. Other Russian ISPs may enforce different filtering rules. Community test reports for other providers are welcome!
+> This workaround has been empirically proven on the tested Beeline connection. Other Russian ISPs may enforce different filtering rules. Community test reports for other providers are welcome!
 
 ---
 
@@ -74,25 +79,36 @@ The WinDivert filter strictly isolates ROTK UDP traffic and **does not touch** y
 
 ## Quick Start (Installation)
 
-1. Go to the [Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases) page and download `H1Z1-ROTK-Russia-v1.0.0.zip`.
-2. Extract the ZIP archive anywhere on your PC.
-3. Right-click **`START.cmd`** and select **Run as administrator**.
-4. Launch ROTK normally through the ROTK Launcher and click Play.
-5. When finished playing, run **`STOP.cmd`** (or press any key in the `START` console window) to cleanly unload the packet filter.
+### Option A: Auto Mode (Recommended)
+
+Auto Mode uses Windows event tracing (WMI) to silently monitor `H1Z1.exe`. The packet filter is enabled **only** while the game is running, and automatically unloads 7 seconds after the game closes. Zero busy polling, near 0% CPU footprint.
+
+1. Download **`H1Z1-ROTK-Russia-v1.2.0.zip`** from [Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases) and extract it anywhere.
+2. Right-click **`INSTALL_AUTO.cmd`** and select **Run as administrator**.
+3. That's it! Launch ROTK whenever you want to play. The bypass activates and deactivates fully automatically.
+4. To remove Auto Mode at any time, right-click **`UNINSTALL_AUTO.cmd`** and select **Run as administrator**.
+
+### Option B: Manual Mode
+
+1. Right-click **`START.cmd`** and select **Run as administrator**.
+2. Launch ROTK normally through the ROTK Launcher and click Play.
+3. When finished playing, run **`STOP.cmd`** (or press any key in the `START` console window) to cleanly unload the packet filter.
 
 ---
 
 ## Diagnostics & Management
 
-- **`START.cmd`**: Validates administrator rights, verifies binary files, and activates the bypass filter.
-- **`STATUS.cmd`**: Displays live status (ACTIVE / INACTIVE), process PID, and WinDivert driver state.
-- **`STOP.cmd`**: Safely terminates only this project's filter instance and unloads the driver.
+- **`INSTALL_AUTO.cmd`**: Registers and starts the background event watcher as an elevated scheduled task running at user logon.
+- **`UNINSTALL_AUTO.cmd`**: Removes the scheduled task, stops the watcher, and restores the system to default.
+- **`STATUS.cmd`**: Displays comprehensive status: Auto Mode task state, watcher process PID, game process state, bypass PID, and WinDivert driver state.
+- **`START.cmd`**: Manually launches the bypass filter in background.
+- **`STOP.cmd`**: Manually terminates the bypass and unloads the WinDivert driver.
 
 ---
 
 ## Administrator Privileges
 
-`START.cmd` requires administrator privileges because **WinDivert** functions as a kernel-level network packet filter driver. Windows restricts raw packet interception to elevated processes to ensure system security.
+Scripts require administrator privileges because **WinDivert** functions as a kernel-level network packet filter driver. Windows restricts raw packet interception to elevated processes to ensure system security.
 
 ---
 
