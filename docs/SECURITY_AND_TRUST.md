@@ -58,9 +58,9 @@ Security software (Windows Defender, VirusTotal, Kaspersky, etc.) may occasional
 
 Instead, follow this rigorous verification checklist:
 1. **Verify Download Origin**: Ensure your archive was downloaded directly from the official [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases) page.
-2. **Verify SHA-256 Checksum**: Check that the release ZIP hash matches the published [`SHA256SUMS.txt`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/SHA256SUMS.txt).
-3. **Compare Upstream Binary Hashes**: Check that bundled binaries match official upstream releases bit-for-bit (see [`BINARY_PROVENANCE.md`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/BINARY_PROVENANCE.md)).
-4. **Inspect Source Scripts**: Review [`scripts/watcher.ps1`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/scripts/watcher.ps1), [`START.cmd`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/START.cmd), and [`INSTALL_AUTO.cmd`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/INSTALL_AUTO.cmd) — they are short, plain-text scripts containing zero obfuscated code.
+2. **Verify SHA-256 Checksum**: Check that the release ZIP hash matches the published [`SHA256SUMS.txt`](../SHA256SUMS.txt).
+3. **Compare Upstream Binary Hashes**: Check that bundled binaries match official upstream releases bit-for-bit (see [`BINARY_PROVENANCE.md`](../BINARY_PROVENANCE.md)).
+4. **Inspect Source Scripts**: Review [`scripts/watcher.ps1`](../scripts/watcher.ps1), [`START.cmd`](../START.cmd), and [`INSTALL_AUTO.cmd`](../INSTALL_AUTO.cmd) — they are short, plain-text scripts containing zero obfuscated code.
 5. **Add Targeted Exclusion Only If Satisfied**: Only after you have independently confirmed that the files are authentic upstream artifacts, add an exclusion specifically for the folder `%ProgramData%\H1Z1-ROTK-Russia` or your portable extraction folder.
 
 **Our Commitment**: This project will **never** attempt to silently whitelist itself in Windows Defender using commands like `Add-MpPreference -ExclusionPath`. All security decisions remain 100% under your explicit control.
@@ -91,7 +91,7 @@ An automated security scan across all project scripts confirms:
 
 ## 6. Strict Target Filter Scope
 
-The WinDivert filter string defined in [`config/filter.txt`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/config/filter.txt) is mathematically bounded:
+The WinDivert filter string defined in [`config/filter.txt`](../config/filter.txt) is mathematically bounded:
 
 ```text
 outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19.126.0 and ip.DstAddr <= 162.19.126.255)) and udp.DstPort >= 20000 and udp.DstPort <= 23000
@@ -122,14 +122,14 @@ You can independently verify any downloaded release archive in PowerShell:
 Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
 ```
 
-Compare the output hash with [`SHA256SUMS.txt`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/SHA256SUMS.txt) in the repository.
+Compare the output hash with [`SHA256SUMS.txt`](../SHA256SUMS.txt) in the repository.
 
 To verify the runtime binaries after extracting:
 ```powershell
 Get-FileHash .\_runtime\* -Algorithm SHA256 | Format-Table -AutoSize
 ```
 
-All checksums are permanently recorded in [`BINARY_PROVENANCE.md`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/BINARY_PROVENANCE.md).
+All checksums are permanently recorded in [`BINARY_PROVENANCE.md`](../BINARY_PROVENANCE.md).
 
 ---
 

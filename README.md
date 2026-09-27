@@ -106,7 +106,14 @@ Auto Mode installs a dedicated runtime into `%ProgramData%\H1Z1-ROTK-Russia` and
 1. Download **`H1Z1-ROTK-Russia-v1.2.1.zip`** from [Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases) and extract it.
 2. Right-click **`INSTALL_AUTO.cmd`** and select **Run as administrator**.
 3. Done! Launch ROTK whenever you want to play.
-4. To uninstall, run **`UNINSTALL_AUTO.cmd`** (from the release folder or from `C:\ProgramData\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd`).
+4. To uninstall, run **`UNINSTALL_AUTO.cmd`** (from the release folder or from `%ProgramData%\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd`).
+
+### Quick SHA-256 Verification
+Before running, you can verify the downloaded release archive in PowerShell:
+```powershell
+Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
+```
+Expected hash: `3254258C51FC11BDBC4098BA1E4D9EA1994C6F56C04A009BD94E56E7379622C4` (matches [`SHA256SUMS.txt`](SHA256SUMS.txt)).
 
 ### Option B: Manual Mode (100% Portable)
 
@@ -147,10 +154,8 @@ Scripts require administrator privileges because **WinDivert** functions as a ke
 - [Security, Trust & Anti-Cheat Architecture](docs/SECURITY_AND_TRUST.md)
 - [Binary Provenance & Upstream Hashes](BINARY_PROVENANCE.md)
 - [Technical Architecture: How It Works](docs/HOW_IT_WORKS.md)
-- [Empirical Findings & Measurement Matrix](docs/TECHNICAL_FINDINGS.md)
 - [Troubleshooting & FAQ](docs/TROUBLESHOOTING.md)
-- [Tested Server Endpoints](docs/TESTED_SERVERS.md)
-- [Third-Party Software Notices](THIRD_PARTY_NOTICES.md)
+- [Changelog](CHANGELOG.md)
 
 ---
 

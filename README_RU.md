@@ -106,7 +106,14 @@ H1Z1.exe ──► Локальный фильтр WinDivert ──► Прям�
 1. Скачайте архив **`H1Z1-ROTK-Russia-v1.2.1.zip`** из [Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases) и распакуйте его.
 2. Нажмите правой кнопкой мыши по **`INSTALL_AUTO.cmd`** и выберите **«Запуск от имени администратора»**.
 3. Готово! Запускайте ROTK в любое время.
-4. Для удаления запустите **`UNINSTALL_AUTO.cmd`** (из этой же папки или из `C:\ProgramData\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd`).
+4. Для удаления запустите **`UNINSTALL_AUTO.cmd`** (из этой же папки или из `%ProgramData%\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd`).
+
+### Быстрая проверка SHA-256
+Перед запуском вы можете проверить скачанный архив релиза в PowerShell:
+```powershell
+Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
+```
+Ожидаемый хеш: `3254258C51FC11BDBC4098BA1E4D9EA1994C6F56C04A009BD94E56E7379622C4` (совпадает с [`SHA256SUMS.txt`](SHA256SUMS.txt)).
 
 ### Вариант Б: Ручной режим (100% Портативный)
 
@@ -147,10 +154,8 @@ H1Z1.exe ──► Локальный фильтр WinDivert ──► Прям�
 - [Безопасность, прозрачность и античит](docs/SECURITY_AND_TRUST_RU.md)
 - [Происхождение бинарников и проверка хешей](BINARY_PROVENANCE.md)
 - [Техническое описание: как это работает](docs/HOW_IT_WORKS.md)
-- [Матрица замеров и результаты тестов](docs/TECHNICAL_FINDINGS.md)
 - [Решение проблем (Troubleshooting)](docs/TROUBLESHOOTING.md)
-- [Список протестированных серверов](docs/TESTED_SERVERS.md)
-- [Уведомления о сторонних лицензиях](THIRD_PARTY_NOTICES.md)
+- [Список изменений (Changelog)](CHANGELOG.md)
 
 ---
 

@@ -1,4 +1,9 @@
-# Temporary & Runtime status files
+# Release and Build Artifacts
+dist/
+build/
+*.zip
+
+# Runtime State & Temporary Files
 *.log
 *.tmp
 *.bak
@@ -7,27 +12,24 @@
 .winws.pid
 .watcher.pid
 
-# Build & Stage directories
-dist/
-build/
-
-# Network captures & diagnostics
+# Network Captures & Diagnostics
 *.pcap
 *.pcapng
 *.etl
 *.csv
 
-# Python byte-compiled / cache
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-venv/
+# IDE & Editor Metadata
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
 
-# Operating system files
+# Operating System Files
 Thumbs.db
 Desktop.ini
 .DS_Store
 
-# Release archives
-*.zip
+# Agent & Local Test Artifacts
+.scratch/
+scratch/
+test/

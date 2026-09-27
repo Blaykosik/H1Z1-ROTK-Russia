@@ -14,7 +14,7 @@ OPTION A: AUTO MODE (RECOMMENDED - INSTALLED TO PROGRAMDATA)
    and unloads automatically 7 seconds after H1Z1 exits.
 5. Check status at any time with STATUS.cmd.
 6. To uninstall, run UNINSTALL_AUTO.cmd from here or from
-   C:\ProgramData\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd.
+   %ProgramData%\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd.
 
 OPTION B: MANUAL MODE (100% PORTABLE)
 1. Right-click START.cmd -> "Run as administrator".
@@ -32,7 +32,7 @@ OPTION B: MANUAL MODE (100% PORTABLE)
    и выключается автоматически через 7 секунд после закрытия игры.
 5. Проверить текущее состояние можно через STATUS.cmd.
 6. Для удаления запустите UNINSTALL_AUTO.cmd от администратора (из этой папки
-   или из C:\ProgramData\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd).
+   или из %ProgramData%\H1Z1-ROTK-Russia\UNINSTALL_AUTO.cmd).
 
 ВАРИАНТ Б: РУЧНОЙ РЕЖИМ (100% ПОРТАТИВНЫЙ)
 1. Нажмите правой кнопкой мыши по START.cmd -> "Запуск от имени администратора".

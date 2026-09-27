@@ -10,11 +10,11 @@ Our core security principle: **Do not ask for blind trust — provide full verif
 
 | File | Purpose | Upstream Project | Upstream Version / Commit | Official Upstream Repository | Bundled SHA-256 | Upstream Match | Modified? |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: |
-| [`bin/winws.exe`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/bin/winws.exe) | Windows packet desynchronization engine | [zapret-win-bundle](https://github.com/bol-van/zapret-win-bundle) by bol-van | `v72.13` (`87e058624c72863db53bdaf7fb6f16576dddb6ab`) x86_64 | `https://github.com/bol-van/zapret-win-bundle` | `A14BFF1DF6234EA555D2E0C61B589F0707C0B12D6C9B7EECCDA76012154996E8` | **MATCH** | **NO** (Unchanged) |
-| [`bin/WinDivert.dll`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/bin/WinDivert.dll) | User-mode interface DLL for WinDivert driver | [WinDivert](https://github.com/basil00/WinDivert) by basil00 (bundled in zapret) | WinDivert 2.2 / zapret `v72.13` x86_64 | `https://github.com/bol-van/zapret-win-bundle` | `C1E060EE19444A259B2162F8AF0F3FE8C4428A1C6F694DCE20DE194AC8D7D9A2` | **MATCH** | **NO** (Unchanged) |
-| [`bin/WinDivert64.sys`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/bin/WinDivert64.sys) | Windows kernel-mode packet filter driver (Digitally Signed) | [WinDivert](https://github.com/basil00/WinDivert) by basil00 (bundled in zapret) | WinDivert 2.2 / zapret `v72.13` x86_64 | `https://github.com/bol-van/zapret-win-bundle` | `8DA085332782708D8767BCACE5327A6EC7283C17CFB85E40B03CD2323A90DDC2` | **MATCH** | **NO** (Unchanged) |
-| [`bin/cygwin1.dll`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/bin/cygwin1.dll) | POSIX emulation runtime required by winws.exe | [Cygwin](https://cygwin.com/) (bundled in zapret) | Cygwin 3.4.10 / zapret `v72.13` x86_64 | `https://github.com/bol-van/zapret-win-bundle` | `103104A52E5293CE418944725DF19E2BF81AD9269B9A120D71D39028E821499B` | **MATCH** | **NO** (Unchanged) |
-| [`bin/stun.bin`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/bin/stun.bin) | Standard RFC 5389 STUN Binding Request payload frame | Project Synthetic Artifact (RFC 5389 format) | RFC 5389 standard STUN packet (100 bytes) | In-repository (see hex dump below) | `9CD5469309780CA56C0BD97266524A48C7EE529D02C3179CFECB20B260A59641` | **N/A** | Project Artifact |
+| [`bin/winws.exe`](bin/winws.exe) | Windows packet desynchronization engine | [zapret-win-bundle](https://github.com/bol-van/zapret-win-bundle) by bol-van | `v72.13` (`87e058624c72863db53bdaf7fb6f16576dddb6ab`) x86_64 | `https://github.com/bol-van/zapret-win-bundle` | `A14BFF1DF6234EA555D2E0C61B589F0707C0B12D6C9B7EECCDA76012154996E8` | **MATCH** | **NO** (Unchanged) |
+| [`bin/WinDivert.dll`](bin/WinDivert.dll) | User-mode interface DLL for WinDivert driver | [WinDivert](https://github.com/basil00/WinDivert) by basil00 (bundled in zapret) | WinDivert 2.2 / zapret `v72.13` x86_64 | `https://github.com/bol-van/zapret-win-bundle` | `C1E060EE19444A259B2162F8AF0F3FE8C4428A1C6F694DCE20DE194AC8D7D9A2` | **MATCH** | **NO** (Unchanged) |
+| [`bin/WinDivert64.sys`](bin/WinDivert64.sys) | Windows kernel-mode packet filter driver (Digitally Signed) | [WinDivert](https://github.com/basil00/WinDivert) by basil00 (bundled in zapret) | WinDivert 2.2 / zapret `v72.13` x86_64 | `https://github.com/bol-van/zapret-win-bundle` | `8DA085332782708D8767BCACE5327A6EC7283C17CFB85E40B03CD2323A90DDC2` | **MATCH** | **NO** (Unchanged) |
+| [`bin/cygwin1.dll`](bin/cygwin1.dll) | POSIX emulation runtime required by winws.exe | [Cygwin](https://cygwin.com/) (bundled in zapret) | Cygwin 3.4.10 / zapret `v72.13` x86_64 | `https://github.com/bol-van/zapret-win-bundle` | `103104A52E5293CE418944725DF19E2BF81AD9269B9A120D71D39028E821499B` | **MATCH** | **NO** (Unchanged) |
+| [`bin/stun.bin`](bin/stun.bin) | Standard RFC 5389 STUN Binding Request payload frame | Project Synthetic Artifact (RFC 5389 format) | RFC 5389 standard STUN packet (100 bytes) | In-repository (see hex dump below) | `9CD5469309780CA56C0BD97266524A48C7EE529D02C3179CFECB20B260A59641` | **N/A** | Project Artifact |
 
 > [!NOTE]
 > All upstream binary components (`winws.exe`, `WinDivert.dll`, `WinDivert64.sys`, and `cygwin1.dll`) are **bundled byte-for-byte unchanged from the official upstream zapret-win-bundle release artifact**. They are not recompiled, modified, patched, or repacked.
@@ -86,7 +86,7 @@ The hashes of `winws.exe`, `WinDivert.dll`, `WinDivert64.sys`, and `cygwin1.dll`
 
 `WinDivert64.sys` is a signed Windows kernel driver. You can verify its digital signature directly in Windows:
 
-1. Right-click [`bin/WinDivert64.sys`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/bin/WinDivert64.sys).
+1. Right-click [`bin/WinDivert64.sys`](bin/WinDivert64.sys).
 2. Click **Properties** -> **Digital Signatures**.
 3. Inspect the signature certificate:
    * **Signer Name**: Basil (WinDivert upstream author)

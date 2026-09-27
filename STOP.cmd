@@ -20,8 +20,8 @@ exit /b 1
 :: 2. Resolve paths for either Release ZIP or Repository layout
 set "SCRIPT_DIR=%~dp0"
 if exist "%SCRIPT_DIR%_runtime\winws.exe" goto layout_root_release
+if exist "%SCRIPT_DIR%bin\winws.exe" goto layout_root_repo
 if exist "%SCRIPT_DIR%winws.exe" goto layout_runtime_folder
-if exist "%SCRIPT_DIR%scripts\start.cmd" goto layout_root_repo
 if exist "%SCRIPT_DIR%..\bin\winws.exe" goto layout_sub_repo
 
 :layout_runtime_folder

@@ -63,8 +63,8 @@
 
 Вместо этого выполните разумную процедуру проверки:
 1. **Проверьте источник**: убедитесь, что архив скачан со страницы [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases) именно этого официального репозитория.
-2. **Сверьте контрольную сумму архива (SHA-256)** в PowerShell (команда приведена ниже) с файлом [`SHA256SUMS.txt`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/SHA256SUMS.txt).
-3. **Сравните хеши бинарников с upstream**: откройте [`BINARY_PROVENANCE.md`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/BINARY_PROVENANCE.md) и убедитесь, что файлы байт-в-байт идентичны официальному релизу zapret.
+2. **Сверьте контрольную сумму архива (SHA-256)** в PowerShell (команда приведена ниже) с файлом [`SHA256SUMS.txt`](../SHA256SUMS.txt).
+3. **Сравните хеши бинарников с upstream**: откройте [`BINARY_PROVENANCE.md`](../BINARY_PROVENANCE.md) и убедитесь, что файлы байт-в-байт идентичны официальному релизу zapret.
 4. **Посмотрите исходный код скриптов**: откройте `.cmd` и `.ps1` файлы в любом текстовом редакторе — они открыты, не обфусцированы и прозрачны.
 5. **Только если вы доверяете файлам**, добавьте исключение для конкретной рабочей папки (`%ProgramData%\H1Z1-ROTK-Russia` или папки с портативной версией) в настройках вашего антивируса.
 
@@ -96,7 +96,7 @@
 
 ## 6. Строгая область действия фильтра (Target Scope)
 
-Фильтр WinDivert, заданный в [`config/filter.txt`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/config/filter.txt):
+Фильтр WinDivert, заданный в [`config/filter.txt`](../config/filter.txt):
 
 ```text
 outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19.126.0 and ip.DstAddr <= 162.19.126.255)) and udp.DstPort >= 20000 and udp.DstPort <= 23000
@@ -127,14 +127,14 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
 ```
 
-Сверьте выведенную строку с файлом [`SHA256SUMS.txt`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/SHA256SUMS.txt) в корне репозитория.
+Сверьте выведенную строку с файлом [`SHA256SUMS.txt`](../SHA256SUMS.txt) в корне репозитория.
 
 Для проверки исполняемых файлов после распаковки:
 ```powershell
 Get-FileHash .\_runtime\* -Algorithm SHA256 | Format-Table -AutoSize
 ```
 
-Все хеши компонентов, их назначение и происхождение зафиксированы в документе [`BINARY_PROVENANCE.md`](file:///D:/GITHUB/WORK/H1Z1-ROTK-Russia/BINARY_PROVENANCE.md).
+Все хеши компонентов, их назначение и происхождение зафиксированы в документе [`BINARY_PROVENANCE.md`](../BINARY_PROVENANCE.md).
 
 ---
 

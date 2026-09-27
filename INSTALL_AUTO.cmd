@@ -111,9 +111,7 @@ copy /y "%SRC_ROOT%\bin\stun.bin" "%TARGET_DIR%\stun.bin" >nul
 copy /y "%SRC_ROOT%\config\filter.txt" "%TARGET_DIR%\filter.txt" >nul
 copy /y "%SRC_ROOT%\scripts\watcher.ps1" "%TARGET_DIR%\watcher.ps1" >nul
 if exist "%SRC_ROOT%\UNINSTALL_AUTO.cmd" copy /y "%SRC_ROOT%\UNINSTALL_AUTO.cmd" "%TARGET_DIR%\UNINSTALL_AUTO.cmd" >nul
-if exist "%SRC_ROOT%\scripts\uninstall_auto.cmd" copy /y "%SRC_ROOT%\scripts\uninstall_auto.cmd" "%TARGET_DIR%\UNINSTALL_AUTO.cmd" >nul
 if exist "%SRC_ROOT%\STATUS.cmd" copy /y "%SRC_ROOT%\STATUS.cmd" "%TARGET_DIR%\STATUS.cmd" >nul
-if exist "%SRC_ROOT%\scripts\status.cmd" copy /y "%SRC_ROOT%\scripts\status.cmd" "%TARGET_DIR%\STATUS.cmd" >nul
 if exist "%SRC_ROOT%\LICENSES" xcopy /y /s /q "%SRC_ROOT%\LICENSES\*" "%TARGET_DIR%\licenses\" >nul
 
 :: Create rotk_winws.conf in target pointing to local filter.txt
