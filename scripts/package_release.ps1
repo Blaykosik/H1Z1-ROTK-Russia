@@ -115,12 +115,21 @@ Copy-Item "$repoRoot\LICENSES\LICENSE.cygwin.txt"    -Destination "$licenseDir\L
 Copy-Item "$repoRoot\LICENSES\LICENSE.windivert.txt" -Destination "$licenseDir\LICENSE.windivert.txt"
 Copy-Item "$repoRoot\LICENSES\LICENSE.zapret.txt"    -Destination "$licenseDir\LICENSE.zapret.txt"
 
-# 6. Create ZIP archive inside dist/
+# 6. Normalize timestamps for deterministic archive build
+Write-Host "[*] Normalizing file timestamps for reproducible archive..."
+$fixedDate = [DateTime]::new(2026, 9, 27, 0, 0, 0, [System.DateTimeKind]::Utc)
+Get-ChildItem -Path (Join-Path $distDir "stage") -Recurse -Force | ForEach-Object {
+    $_.LastWriteTimeUtc = $fixedDate
+    $_.CreationTimeUtc = $fixedDate
+}
+(Get-Item (Join-Path $distDir "stage")).LastWriteTimeUtc = $fixedDate
+
+# 7. Create ZIP archive inside dist/
 Write-Host "[*] Compressing release package to $zipPath..."
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 [System.IO.Compression.ZipFile]::CreateFromDirectory((Join-Path $distDir "stage"), $zipPath, [System.IO.Compression.CompressionLevel]::Optimal, $false)
 
-# 7. Compute SHA256 checksums and generate SHA256SUMS.txt in dist/
+# 8. Compute SHA256 checksums and generate SHA256SUMS.txt in dist/
 $zipHash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash
 Write-Host "[*] Release ZIP SHA256: $zipHash"
 
