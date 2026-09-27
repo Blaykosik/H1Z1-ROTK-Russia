@@ -1,5 +1,6 @@
-# H1Z1 ROTK Russia - Event-Driven Process Watcher (v1.2.0)
+# H1Z1 ROTK Russia - Event-Driven Process Watcher (v1.2.1)
 # Automatically manages the life-cycle of the direct UDP bypass based on H1Z1.exe.
+# Strictly isolated: only controls this project's own winws instance; never touches unrelated tools.
 
 $ErrorActionPreference = "Stop"
 
@@ -16,14 +17,18 @@ if (Test-Path "$scriptDir\_runtime\winws.exe") {
     $runtimeDir = $scriptDir
     $binDir     = $runtimeDir
     $configDir  = $runtimeDir
+} elseif (Test-Path "$scriptDir\bin\winws.exe") {
+    $binDir     = "$scriptDir\bin"
+    $configDir  = "$scriptDir\config"
 } else {
     $binDir     = "$scriptDir\bin"
     $configDir  = "$scriptDir\config"
 }
 
-$pidFile        = "$binDir\.winws.pid"
-$watcherPidFile = "$binDir\.watcher.pid"
-$confFile       = "$configDir\rotk_winws.conf"
+$pidFile           = "$binDir\.winws.pid"
+$watcherPidFile    = "$binDir\.watcher.pid"
+$confFile          = "$configDir\rotk_winws.conf"
+$expectedWinwsPath = [System.IO.Path]::GetFullPath("$binDir\winws.exe")
 
 # Record Watcher process ID
 try {
@@ -35,9 +40,26 @@ function Is-GameRunning {
     return ($null -ne $procs -and $procs.Count -gt 0)
 }
 
+function Get-TrackedBypassProcess {
+    if (-not (Test-Path $pidFile)) { return $null }
+    try {
+        $rawPid = (Get-Content $pidFile -ErrorAction Stop | Select-Object -First 1).Trim()
+        if ($rawPid -match '^\d+$') {
+            $targetId = [int]$rawPid
+            $p = Get-Process -Id $targetId -ErrorAction SilentlyContinue
+            if ($null -ne $p -and $p.ProcessName -like "*winws*") {
+                $pPath = try { [System.IO.Path]::GetFullPath($p.Path) } catch { "" }
+                if ($pPath -eq $expectedWinwsPath) {
+                    return $p
+                }
+            }
+        }
+    } catch {}
+    return $null
+}
+
 function Is-BypassRunning {
-    $procs = Get-Process -Name "winws" -ErrorAction SilentlyContinue
-    return ($null -ne $procs -and $procs.Count -gt 0)
+    return ($null -ne (Get-TrackedBypassProcess))
 }
 
 function Start-Bypass {
@@ -46,8 +68,8 @@ function Start-Bypass {
     # Clean up any stale pid file
     if (Test-Path $pidFile) { Remove-Item $pidFile -Force -ErrorAction SilentlyContinue }
 
-    # Start winws minimized
-    $proc = Start-Process -FilePath "$binDir\winws.exe" -ArgumentList "@$confFile" -WorkingDirectory $binDir -WindowStyle Minimized -PassThru
+    # Start our winws minimized
+    $proc = Start-Process -FilePath $expectedWinwsPath -ArgumentList "@$confFile" -WorkingDirectory $binDir -WindowStyle Minimized -PassThru
     Start-Sleep -Milliseconds 800
     if ($proc -and (-not $proc.HasExited)) {
         $proc.Id | Out-File -FilePath $pidFile -Encoding ascii -Force
@@ -55,22 +77,27 @@ function Start-Bypass {
 }
 
 function Stop-Bypass {
+    # Stop ONLY our tracked process
+    $p = Get-TrackedBypassProcess
+    if ($null -ne $p) {
+        Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+    }
     if (Test-Path $pidFile) {
-        try {
-            $savedPid = (Get-Content $pidFile -ErrorAction SilentlyContinue | Select-Object -First 1).Trim()
-            if ($savedPid -match '^\d+$') {
-                Stop-Process -Id [int]$savedPid -Force -ErrorAction SilentlyContinue
-            }
-        } catch {}
         Remove-Item $pidFile -Force -ErrorAction SilentlyContinue
     }
     
-    # Ensure any winws process is terminated
-    Get-Process -Name "winws" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    # Isolation safety check: only unhook WinDivert driver if NO other winws or known tool is running
+    $allWinws = Get-Process -Name "winws" -ErrorAction SilentlyContinue
+    $otherWinws = @($allWinws | Where-Object { 
+        try { [System.IO.Path]::GetFullPath($_.Path) -ne $expectedWinwsPath } catch { $true }
+    })
     
-    # Safely unhook WinDivert driver
-    & sc.exe stop windivert > $null 2>&1
-    & sc.exe delete windivert > $null 2>&1
+    if ($otherWinws.Count -eq 0) {
+        $gdpi = Get-Process -Name "goodbyedpi" -ErrorAction SilentlyContinue
+        if ($null -eq $gdpi) {
+            & sc.exe stop windivert > $null 2>&1
+        }
+    }
 }
 
 # Cleanup on exit
@@ -108,8 +135,8 @@ try {
                     Start-Bypass
                     $state = "RUNNING"
                 }
-            } catch [System.Management.ManagementException] {
-                # 5s timeout tick: verify state in case event was missed
+            } catch {
+                # 5s safety reconciliation: verify state in case event was missed
                 if (Is-GameRunning) {
                     Start-Bypass
                     $state = "RUNNING"
@@ -124,10 +151,10 @@ try {
                     Stop-Bypass
                     $state = "STOPPED"
                 }
-            } catch [System.Management.ManagementException] {
-                # 5s timeout tick: verify if game exited without stop event
+            } catch {
+                # 5s safety reconciliation: verify if game exited without stop event
                 if (-not (Is-GameRunning)) {
-                    Start-Sleep -Seconds 7
+                    Start-Sleep -Seconds 2
                     if (-not (Is-GameRunning)) {
                         Stop-Bypass
                         $state = "STOPPED"

@@ -1,13 +1,13 @@
-# Packaging script for H1Z1-ROTK-Russia v1.2.0
+# Packaging script for H1Z1-ROTK-Russia v1.2.1
 $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $distDir  = Join-Path $repoRoot "dist"
 $stageDir = Join-Path $distDir "stage\H1Z1-ROTK-Russia"
-$zipPath  = Join-Path $repoRoot "H1Z1-ROTK-Russia-v1.2.0.zip"
+$zipPath  = Join-Path $repoRoot "H1Z1-ROTK-Russia-v1.2.1.zip"
 
 Write-Host "=================================================="
-Write-Host " Building H1Z1-ROTK-Russia v1.2.0 Release ZIP"
+Write-Host " Building H1Z1-ROTK-Russia v1.2.1 Release ZIP"
 Write-Host "=================================================="
 
 # 1. Clean previous build artifacts
@@ -37,6 +37,8 @@ Copy-Item "$repoRoot\bin\cygwin1.dll"      -Destination "$runtimeDir\cygwin1.dll
 Copy-Item "$repoRoot\bin\stun.bin"         -Destination "$runtimeDir\stun.bin"
 Copy-Item "$repoRoot\scripts\watcher.ps1"  -Destination "$runtimeDir\watcher.ps1"
 Copy-Item "$repoRoot\config\filter.txt"    -Destination "$runtimeDir\filter.txt"
+Copy-Item "$repoRoot\UNINSTALL_AUTO.cmd"   -Destination "$runtimeDir\UNINSTALL_AUTO.cmd"
+Copy-Item "$repoRoot\STATUS.cmd"           -Destination "$runtimeDir\STATUS.cmd"
 
 # Create release-specific rotk_winws.conf pointing directly to @filter.txt in current folder
 $confContent = @(

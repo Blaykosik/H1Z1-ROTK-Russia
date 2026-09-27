@@ -45,44 +45,44 @@ goto layout_resolved
 
 :layout_resolved
 set "PID_FILE=%BIN_DIR%\.winws.pid"
+set "EXPECTED_EXE=%BIN_DIR%\winws.exe"
 
-title H1Z1 ROTK Russia - Stop Bypass
+title H1Z1 ROTK Russia - Stop Bypass (Portable)
 color 0C
 
 echo.
 echo ======================================================================
-echo           H1Z1 ROTK Russia - Stopping Bypass
+echo           H1Z1 ROTK Russia - Stopping Bypass (Portable)
 echo ======================================================================
 echo.
 
 set "STOPPED=0"
 
-if not exist "%PID_FILE%" goto check_stray
+if not exist "%PID_FILE%" goto check_stopped
 for /f "usebackq delims=" %%P in ("%PID_FILE%") do set "TARGET_PID=%%P"
 if not defined TARGET_PID goto clear_pid
 
-powershell -NoProfile -Command "$p = Get-Process -Id %TARGET_PID% -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*winws*' }; if ($null -ne $p) { Stop-Process -Id %TARGET_PID% -Force; exit 0 } else { exit 1 }"
-if %errorlevel% neq 0 goto clear_pid
-
-echo  [*] Terminated project winws process [PID: %TARGET_PID%]
-set "STOPPED=1"
+:: Validate PID and path before terminating
+powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%EXPECTED_EXE%'); $p = Get-Process -Id ([int]'%TARGET_PID%') -ErrorAction SilentlyContinue; if ($null -ne $p -and [System.IO.Path]::GetFullPath($p.Path) -eq $exp) { Stop-Process -Id $p.Id -Force; exit 0 } else { exit 1 }"
+if %errorlevel% equ 0 (
+    echo  [*] Terminated project winws process [PID: %TARGET_PID%]
+    set "STOPPED=1"
+) else (
+    echo  [*] Tracked PID was not active or belonged to a different process.
+)
 
 :clear_pid
 if exist "%PID_FILE%" del /f /q "%PID_FILE%" >nul 2>&1
 
-:check_stray
-:: Also terminate any other winws process matching our project
-powershell -NoProfile -Command "$procs = Get-Process -Name 'winws' -ErrorAction SilentlyContinue; if ($null -ne $procs) { $procs | Stop-Process -Force; exit 0 } else { exit 1 }" >nul 2>&1
-if %errorlevel% equ 0 set "STOPPED=1"
+:check_stopped
+if "%STOPPED%"=="0" echo  [*] No tracked active winws process found for this portable folder.
 
-if "%STOPPED%"=="0" echo  [*] No active winws process was running.
-
-echo  [*] Cleaning up WinDivert driver service...
-sc.exe stop windivert >nul 2>&1
-sc.exe delete windivert >nul 2>&1
+:: Safe driver isolation check: only stop WinDivert if NO OTHER winws is running on the system
+echo  [*] Checking driver service isolation...
+powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%EXPECTED_EXE%'); $others = @(Get-Process -Name 'winws' -ErrorAction SilentlyContinue | Where-Object { try { [System.IO.Path]::GetFullPath($_.Path) -ne $exp } catch { $true } }); $gdpi = Get-Process -Name 'goodbyedpi' -ErrorAction SilentlyContinue; if ($others.Count -eq 0 -and $null -eq $gdpi) { sc.exe stop windivert > $null 2>&1 }" >nul 2>&1
 
 echo.
-echo  [OK] Direct UDP bypass is STOPPED. Driver unhooked.
+echo  [OK] Project bypass is STOPPED.
 echo.
 ping 127.0.0.1 -n 2 >nul
 exit /b 0

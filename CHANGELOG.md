@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.2.1] - 2026-09-27
+
+### Fixed
+- **Process Isolation (Zero Interference with Other `winws` / `zapret` Instances)**:
+  - Strict PID tracking and canonical binary path validation (`[System.IO.Path]::GetFullPath`) in all scripts (`watcher.ps1`, `START.cmd`, `STOP.cmd`, `INSTALL_AUTO.cmd`, `UNINSTALL_AUTO.cmd`, `STATUS.cmd`).
+  - Completely removed all global `taskkill /IM winws.exe` and untracked `Get-Process -Name winws | Stop-Process` commands.
+  - Safe driver isolation: `WinDivert` service is only stopped if NO other `winws` or `goodbyedpi` processes are running anywhere on the system.
+- **Stable `%ProgramData%` Auto Mode Installation**:
+  - `INSTALL_AUTO.cmd` copies the full runtime, configurations, watcher, and management scripts into `%ProgramData%\H1Z1-ROTK-Russia`.
+  - Windows scheduled task now targets the persistent `%ProgramData%` folder, allowing users to safely move or delete the extracted release archive without breaking Auto Mode.
+- **Robust Uninstall Lifecycle**:
+  - `UNINSTALL_AUTO.cmd` cleanly unregisters the scheduled task, terminates the running watcher process, terminates only the project's own `winws` process, and removes the `%ProgramData%\H1Z1-ROTK-Russia` folder even when executed directly from inside `%ProgramData%`.
+- **Enhanced Status Diagnostics**:
+  - `STATUS.cmd` accurately distinguishes between the project's managed bypass instance and third-party `winws` instances (e.g. YouTube/Discord zapret), reporting external instances as `DETECTED [PID: ..., not managed]` without interfering with them.
+
+### Changed
+- **Documentation Accuracy**:
+  - Corrected packet-filtering description: replaced absolute "exactly 12 packets" claim with empirical observation of UDP flow cessation shortly after initial handshake (clarified that 12 packets was observed in synthetic probe tests).
+  - Clarified STUN/DPI mechanism: framed the technique as an empirical packet-crafting workaround rather than a definitive assertion about internal TSPU/DPI hardware state machine transitions.
+  - Removed "zero jitter" phrasing: documented real-world observed latency of ~55–61 ms with significantly reduced jitter and steadier frame pacing compared to VLESS tunneling.
+  - Clarified Auto Mode architecture: primarily event-driven via Windows WMI (`Win32_ProcessStartTrace` / `Win32_ProcessStopTrace`), complemented by 5-second safety reconciliation in case of dropped OS events.
+
+---
+
 ## [v1.2.0] - 2026-09-27
 
 ### Added

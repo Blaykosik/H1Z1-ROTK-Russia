@@ -6,7 +6,7 @@ This document describes the root cause of the UDP flow termination observed on t
 
 ## 1. The Direct UDP Problem
 
-When H1Z1 connects to ROTK game servers hosted on foreign datacenters (specifically OVH in Western Europe), the network flow establishes an initial UDP handshake:
+On the tested connection, sustained ROTK UDP sessions consistently stopped receiving replies shortly after connection establishment when connecting to ROTK game servers hosted on foreign datacenters (specifically OVH in Western Europe):
 
 ```mermaid
 sequenceDiagram
@@ -18,30 +18,29 @@ sequenceDiagram
     ISP->>Server: Datagram #1
     Server->>ISP: SessionReply
     ISP->>Game: SessionReply (RTT ~55-60 ms)
-    Note over ISP: State counter: 1 / 12 allowed
-    Game->>ISP: Datagrams #2 .. #12 (Login / Auth)
-    ISP->>Server: Datagrams #2 .. #12
-    Server->>ISP: Replies #2 .. #12
-    ISP->>Game: Replies #2 .. #12
-    Note over ISP: Counter reaches 12 packets!
-    Game->>ISP: Datagram #13 (Game World Data)
-    Note over ISP: Packet #13 dropped
+    Game->>ISP: Subsequent Handshake Datagrams
+    ISP->>Server: Subsequent Handshake Datagrams
+    Server->>ISP: Handshake Replies
+    ISP->>Game: Handshake Replies
+    Note over ISP: Flow filter terminates unclassified UDP stream
+    Game->>ISP: Datagram (Game World Data)
+    Note over ISP: Datagrams dropped
     ISP--xServer: DROPPED
     Note over Game: No incoming replies. Connection drops.
 ```
 
 ### Observed Characteristics:
-- **Strict Packet Counter**: On the tested Beeline connection, flow termination did not trigger based on a time duration or bandwidth limit. Probing at 1 packet per second survived for 11+ seconds before cutting off on packet #13. Probing at 10 packets per second was cut off after ~1.16 seconds.
-- **Selective Protocol Filtering**: Known protocol flows (such as standard DNS or WebRTC/STUN traffic) are not subjected to this counter restriction.
+- **Connection Termination**: On the tested Beeline connection, direct unclassified UDP flows to OVH servers were terminated shortly after connection establishment if left untouched.
+- **Selective Protocol Filtering**: Standard known protocols (such as standard DNS or WebRTC/STUN traffic) are not subjected to this restriction.
 - **Target Specificity**: Non-OVH game servers and Russian domestic endpoints operated with 0% packet loss, confirming the restriction specifically impacts foreign hosting subnets (OVH `AS16276`).
 
 ---
 
 ## 2. The STUN Desync Solution
 
-VLESS was playable and often stayed around roughly 60–80 ms, but the tunneled path introduced noticeable jitter and occasional latency spikes reaching approximately 140–170 ms on the tested setup. The direct local bypass keeps the native route and produced a much steadier ~55–61 ms connection.
+VLESS was playable and often stayed around roughly 60–80 ms, but the tunneled path introduced noticeable jitter and occasional latency spikes reaching approximately 140–170 ms on the tested setup. The direct local bypass keeps the native route and produced a much steadier connection with substantially reduced jitter compared with the tested VLESS path (~55–61 ms observed during testing).
 
-Instead of tunneling game traffic through a foreign proxy, we apply a local packet-level desynchronization using `winws` and the kernel packet interception driver `WinDivert`.
+The project applies a local STUN-based desynchronization strategy to initial UDP packets using `winws` and the kernel packet interception driver `WinDivert`.
 
 ```mermaid
 sequenceDiagram
@@ -54,24 +53,23 @@ sequenceDiagram
     Note over WinDivert: Injects fake STUN Binding Request (RFC 5389)
     WinDivert->>ISP: [1] Fake STUN Datagram
     WinDivert->>ISP: [2] Real Game Datagram
-    ISP->>ISP: Packet inspection classifies flow as WebRTC/STUN
-    Note over ISP: Flow allowed. Counter disabled.
+    Note over ISP: Packet inspection allows flow (Hypothesis: STUN classification)
     ISP->>Server: [1] Fake STUN Datagram (Ignored by game engine)
     ISP->>Server: [2] Real Game Datagram (Processed normally)
     Server->>ISP: Game Session Reply
     ISP->>Game: Game Session Reply (Native RTT ~55-60 ms)
     Note over WinDivert: cutoff=d2: Desync disabled for remainder of flow
     loop Normal Gameplay
-        Game->>Server: Unmodified Native UDP Packets (0% Loss)
-        Server->>Game: Unmodified Native UDP Packets (0% Loss)
+        Game->>Server: Unmodified Native UDP Packets
+        Server->>Game: Unmodified Native UDP Packets
     end
 ```
 
 ### Key Technical Details:
 1. **Single-Packet Handshake Prefix (`cutoff=d2`)**:
    `winws` injects a standard 100-byte STUN Binding Request (`stun.bin`, opcode `0x0001` with magic cookie `0x2112A442`) on the very first datagram of the flow.
-2. **Intermediate Filter Classification**:
-   The network filter inspects the first packet, matches the STUN header, and marks the entire 5-tuple as an authorized real-time voice/video/WebRTC communication.
+2. **Intermediate Filter Behavior**:
+   On the tested connection, the STUN prefix is sufficient to prevent the observed flow cutoff, allowing subsequent traffic to proceed. *(Note: The internal hardware classification mechanisms of provider filters cannot be independently inspected; the effectiveness of STUN classification is an empirical finding).*
 3. **Server-Side Safety**:
    The ROTK server running on Linux receives the STUN datagram on port 20141 or 20214. Because the SOE/Daybreak game protocol engine does not recognize the STUN opcode, the server simply discards the STUN datagram and immediately processes the legitimate `SessionRequest` datagram right behind it.
 4. **Zero Overhead for Active Gameplay**:
@@ -98,24 +96,30 @@ Every match instance allocated by the ROTK infrastructure is automatically prote
 
 ---
 
-## 4. Event-Driven Auto Mode Architecture (v1.2.0)
+## 4. Event-Driven Auto Mode Architecture (v1.2.1)
 
-To avoid keeping a network packet filter permanently active on the system, `v1.2.0` introduces a fully automated, headless lifecycle manager (`watcher.ps1`):
+To avoid keeping a network packet filter permanently active on the system, Auto Mode provides a fully automated, headless lifecycle manager (`watcher.ps1`):
 
 ```mermaid
 flowchart TD
-    A[Windows User Logon] --> B[Task Scheduler starts watcher.ps1 hidden]
+    A[Windows User Logon] --> B[Task Scheduler starts watcher.ps1 from ProgramData]
     B --> C[Wait for Win32_ProcessStartTrace 'H1Z1.exe']
-    C -- Event Fired --> D[Launch winws.exe & attach WinDivert]
+    C -- Event Fired / Safety Reconciliation --> D[Launch winws.exe from ProgramData & attach WinDivert]
     D --> E[Wait for Win32_ProcessStopTrace 'H1Z1.exe']
-    E -- Event Fired --> F[Wait 7s Exit Grace Period]
+    E -- Event Fired / Safety Reconciliation --> F[Wait 7s Exit Grace Period]
     F --> G{Is H1Z1.exe restarted?}
     G -- Yes --> E
-    G -- No --> H[Terminate winws.exe & unload WinDivert driver]
-    H --> C
+    G -- No --> H[Terminate ONLY project winws.exe]
+    H --> I{Are other winws or tools active?}
+    I -- No --> J[Safely unload WinDivert driver]
+    I -- Yes --> K[Leave WinDivert driver intact for other tools]
+    J --> C
+    K --> C
 ```
 
-- **Event-Driven**: Uses WMI kernel event listeners (`Win32_ProcessStartTrace` and `Win32_ProcessStopTrace`) instead of polling loops. CPU consumption is practically 0%.
-- **Exit Grace Period**: When `H1Z1.exe` exits, the watcher waits 7 seconds before terminating `winws`. If the game was quickly restarted (e.g. after a crash or game setting change), the bypass remains active without dropping the driver.
-- **Zero GUI / Completely Headless**: Runs silently in the background with no taskbar icons or open console windows.
-- **Driver Cleanliness**: Whenever the game is not running, the WinDivert driver is fully unloaded from kernel space.
+- **Primarily Event-Driven via WMI**: Uses WMI kernel event listeners (`Win32_ProcessStartTrace` and `Win32_ProcessStopTrace`), with a low-frequency 5-second safety reconciliation tick in case an OS event is missed. Idle CPU consumption is practically 0%.
+- **Stable `%ProgramData%` Location**: The runtime is installed to `%ProgramData%\H1Z1-ROTK-Russia`, making the service independent of whether the user moves or deletes the extracted download folder.
+- **Strict Process Isolation**: Uses explicit PID and executable path validation (`(Get-Process).Path -eq $expectedPath`). Never terminates unrelated `winws`, `zapret`, or third-party DPI tools.
+- **Safe Driver Lifecycle**: Checks whether any other `winws` or `goodbyedpi` process is active before unhooking the driver, preventing disruption to other tools.
+- **Exit Grace Period**: When `H1Z1.exe` exits, the watcher waits 7 seconds before terminating `winws`. If the game was quickly restarted, the bypass remains active without dropping the driver.
+- **Zero GUI**: Runs silently in the background with no taskbar icons or open console windows.

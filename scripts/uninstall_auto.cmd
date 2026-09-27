@@ -10,11 +10,11 @@ echo ======================================================================
 echo  [ERROR] Administrator privileges are required!
 echo ======================================================================
 echo.
-echo  Removing the scheduled task and unloading the WinDivert driver
+echo  Removing the scheduled task and deleting installed runtime files
 echo  requires Administrator privileges.
 echo.
 echo  How to run:
-echo    1. Right-click UNINSTALL_AUTO.cmd (or scripts\uninstall_auto.cmd)
+echo    1. Right-click UNINSTALL_AUTO.cmd
 echo    2. Select "Run as administrator"
 echo.
 echo ======================================================================
@@ -22,47 +22,20 @@ pause
 exit /b 1
 
 :is_admin
-:: 2. Resolve paths for either Release ZIP or Repository layout
-set "SCRIPT_DIR=%~dp0"
-if exist "%SCRIPT_DIR%_runtime\winws.exe" goto layout_root_release
-if exist "%SCRIPT_DIR%winws.exe" goto layout_runtime_folder
-if exist "%SCRIPT_DIR%scripts\watcher.ps1" goto layout_root_repo
-if exist "%SCRIPT_DIR%..\scripts\watcher.ps1" goto layout_sub_repo
-
-:layout_runtime_folder
-set "BIN_DIR=%SCRIPT_DIR%"
-goto layout_resolved
-
-:layout_root_release
-set "BIN_DIR=%SCRIPT_DIR%_runtime"
-goto layout_resolved
-
-:layout_root_repo
-set "BIN_DIR=%SCRIPT_DIR%bin"
-goto layout_resolved
-
-:layout_sub_repo
-pushd "%SCRIPT_DIR%.."
-set "ROOT_DIR=%CD%"
-popd
-set "BIN_DIR=%ROOT_DIR%\bin"
-goto layout_resolved
-
-:layout_resolved
+set "TARGET_DIR=%ProgramData%\H1Z1-ROTK-Russia"
 set "TASK_NAME=H1Z1-ROTK-Russia Auto Mode"
-set "WATCHER_PID_FILE=%BIN_DIR%\.watcher.pid"
-set "WINWS_PID_FILE=%BIN_DIR%\.winws.pid"
+set "SCRIPT_DIR=%~dp0"
 
-title H1Z1 ROTK Russia - Uninstall Auto Mode (v1.2.0)
+title H1Z1 ROTK Russia - Uninstall Auto Mode (v1.2.1)
 color 0C
 
 echo.
 echo ======================================================================
-echo       H1Z1 ROTK Russia - Uninstall Auto Mode (v1.2.0)
+echo       H1Z1 ROTK Russia - Uninstall Auto Mode (v1.2.1)
 echo ======================================================================
 echo.
 
-:: 3. Stop and delete scheduled task
+:: 2. Stop and delete scheduled task
 echo  [*] Removing Windows scheduled task [%TASK_NAME%]...
 schtasks /query /tn "%TASK_NAME%" >nul 2>&1
 if %errorlevel% equ 0 (
@@ -73,39 +46,46 @@ if %errorlevel% equ 0 (
     echo  [*] Scheduled task was not registered.
 )
 
-:: 4. Terminate background watcher processes
-echo  [*] Terminating background watcher processes...
-if exist "%WATCHER_PID_FILE%" (
-    for /f "usebackq delims=" %%P in ("%WATCHER_PID_FILE%") do (
-        powershell -NoProfile -Command "Stop-Process -Id %%P -Force -ErrorAction SilentlyContinue" >nul 2>&1
-    )
-    del /f /q "%WATCHER_PID_FILE%" >nul 2>&1
+:: 3. Terminate background watcher process (strict PID and command line check)
+echo  [*] Terminating Auto Mode watcher process...
+if exist "%TARGET_DIR%\.watcher.pid" (
+    powershell -NoProfile -Command "$wPid = (Get-Content '%TARGET_DIR%\.watcher.pid' -ErrorAction SilentlyContinue | Select -First 1).Trim(); if ($wPid -match '^\d+$') { $p = Get-Process -Id ([int]$wPid) -ErrorAction SilentlyContinue; if ($null -ne $p -and $p.ProcessName -like '*powershell*') { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }" >nul 2>&1
+    del /f /q "%TARGET_DIR%\.watcher.pid" >nul 2>&1
+)
+if exist "%SCRIPT_DIR%.watcher.pid" (
+    powershell -NoProfile -Command "$wPid = (Get-Content '%SCRIPT_DIR%.watcher.pid' -ErrorAction SilentlyContinue | Select -First 1).Trim(); if ($wPid -match '^\d+$') { $p = Get-Process -Id ([int]$wPid) -ErrorAction SilentlyContinue; if ($null -ne $p -and $p.ProcessName -like '*powershell*') { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }" >nul 2>&1
+    del /f /q "%SCRIPT_DIR%.watcher.pid" >nul 2>&1
 )
 
-:: Also terminate any stray watcher instances
-powershell -NoProfile -Command "$w = Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*watcher.ps1*' }; if ($w) { $w | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } }" >nul 2>&1
-
-:: 5. Terminate active bypass and unload WinDivert driver
-echo  [*] Terminating active bypass and unloading driver...
-if exist "%WINWS_PID_FILE%" (
-    for /f "usebackq delims=" %%P in ("%WINWS_PID_FILE%") do (
-        powershell -NoProfile -Command "$p = Get-Process -Id %%P -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*winws*' }; if ($p) { Stop-Process -Id %%P -Force }" >nul 2>&1
-    )
-    del /f /q "%WINWS_PID_FILE%" >nul 2>&1
+:: 4. Terminate ONLY our tracked winws process (strict PID and path validation)
+echo  [*] Terminating project bypass process (isolated)...
+if exist "%TARGET_DIR%\.winws.pid" (
+    powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%TARGET_DIR%\winws.exe'); $tPid = (Get-Content '%TARGET_DIR%\.winws.pid' -ErrorAction SilentlyContinue | Select -First 1).Trim(); if ($tPid -match '^\d+$') { $p = Get-Process -Id ([int]$tPid) -ErrorAction SilentlyContinue; if ($null -ne $p -and [System.IO.Path]::GetFullPath($p.Path) -eq $exp) { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } }" >nul 2>&1
+    del /f /q "%TARGET_DIR%\.winws.pid" >nul 2>&1
 )
 
-sc.exe stop windivert >nul 2>&1
-sc.exe delete windivert >nul 2>&1
+:: 5. Driver isolation check: only stop WinDivert if NO OTHER winws is running on the system
+echo  [*] Checking driver service isolation...
+powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%TARGET_DIR%\winws.exe'); $others = @(Get-Process -Name 'winws' -ErrorAction SilentlyContinue | Where-Object { try { [System.IO.Path]::GetFullPath($_.Path) -ne $exp } catch { $true } }); $gdpi = Get-Process -Name 'goodbyedpi' -ErrorAction SilentlyContinue; if ($others.Count -eq 0 -and $null -eq $gdpi) { sc.exe stop windivert > $null 2>&1 }" >nul 2>&1
+
+:: 6. Clean up installed ProgramData directory
+echo  [*] Removing installed runtime directory: %TARGET_DIR%...
+cd /d "%TEMP%"
+powershell -NoProfile -Command "Start-Sleep -Milliseconds 300; if (Test-Path '%TARGET_DIR%') { Get-ChildItem '%TARGET_DIR%' -Exclude 'UNINSTALL_AUTO.cmd' -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue }" >nul 2>&1
+
+:: Background process removes the remaining folder and self after this script exits
+powershell -NoProfile -Command "Start-Process powershell.exe -ArgumentList '-NoProfile -Command Start-Sleep -Seconds 2; Remove-Item -LiteralPath ''%TARGET_DIR%'' -Recurse -Force' -WindowStyle Hidden" >nul 2>&1
 
 echo.
 echo ======================================================================
 echo  [SUCCESS] Auto Mode has been completely UNINSTALLED!
 echo ======================================================================
 echo.
-echo  - Scheduled task deleted from Windows Task Scheduler.
+echo  - Windows scheduled task removed.
 echo  - Headless watcher stopped.
-echo  - WinDivert kernel driver unloaded.
-echo  - System restored to default state.
+echo  - Project bypass process stopped (unrelated winws untouched).
+echo  - Installed ProgramData directory removed.
+echo  - System restored to clean state.
 echo.
 pause
 exit /b 0

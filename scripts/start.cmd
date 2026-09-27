@@ -14,7 +14,7 @@ echo  WinDivert operates as a Windows network packet filter driver and
 echo  requires Administrator rights to intercept and desync ROTK UDP flows.
 echo.
 echo  How to run:
-echo    1. Right-click START.cmd (or scripts\start.cmd)
+echo    1. Right-click START.cmd
 echo    2. Select "Run as administrator"
 echo.
 echo ======================================================================
@@ -61,8 +61,9 @@ goto layout_resolved
 
 :layout_resolved
 set "PID_FILE=%BIN_DIR%\.winws.pid"
+set "EXPECTED_EXE=%BIN_DIR%\winws.exe"
 
-title H1Z1 ROTK Russia - Direct UDP Bypass v1.2.0
+title H1Z1 ROTK Russia - Direct UDP Bypass v1.2.1 (Portable)
 color 0A
 
 :: 3. Verify presence of required runtime files
@@ -89,7 +90,8 @@ if not exist "%PID_FILE%" goto do_start
 for /f "usebackq delims=" %%P in ("%PID_FILE%") do set "EXISTING_PID=%%P"
 if not defined EXISTING_PID goto clear_old_pid
 
-powershell -NoProfile -Command "$p = Get-Process -Id %EXISTING_PID% -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*winws*' }; if ($null -ne $p) { exit 0 } else { exit 1 }"
+:: Validate PID and path
+powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%EXPECTED_EXE%'); $p = Get-Process -Id ([int]'%EXISTING_PID%') -ErrorAction SilentlyContinue; if ($null -ne $p -and [System.IO.Path]::GetFullPath($p.Path) -eq $exp) { exit 0 } else { exit 1 }"
 if %errorlevel% neq 0 goto clear_old_pid
 
 echo.
@@ -112,9 +114,10 @@ if exist "%PID_FILE%" del /f /q "%PID_FILE%" >nul 2>&1
 :do_start
 echo.
 echo ======================================================================
-echo           H1Z1 ROTK Russia - Direct UDP Bypass v1.2.0
+echo        H1Z1 ROTK Russia - Direct UDP Bypass v1.2.1 (Portable)
 echo ======================================================================
 echo.
+echo  [*] Mode              : Portable (runs directly from this folder)
 echo  [*] Target Scope:
 echo      - Login / Gateway : 162.19.94.95
 echo      - Match Servers   : 162.19.126.0/24 [162.19.126.0 - 162.19.126.255]
@@ -122,11 +125,11 @@ echo      - Protocol / Ports: UDP 20000 - 23000
 echo.
 echo  [*] Network Profile   : Native Direct UDP [No VPN / No Proxy / No Relay]
 echo  [*] Desync Method     : Single-packet STUN prefix [cutoff=d2]
-echo  [*] Expected Latency  : ~55 - 61 ms [on tested ISP path]
+echo  [*] Observed Latency  : ~55 - 61 ms [on tested ISP path]
 echo.
 echo  [*] Starting WinDivert filter...
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$proc = Start-Process -FilePath '%BIN_DIR%\winws.exe' -ArgumentList '@%CONF_FILE%' -WorkingDirectory '%BIN_DIR%' -WindowStyle Minimized -PassThru; $proc.Id | Out-File -FilePath '%PID_FILE%' -Encoding ascii"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$proc = Start-Process -FilePath '%EXPECTED_EXE%' -ArgumentList '@%CONF_FILE%' -WorkingDirectory '%BIN_DIR%' -WindowStyle Minimized -PassThru; $proc.Id | Out-File -FilePath '%PID_FILE%' -Encoding ascii"
 
 ping 127.0.0.1 -n 3 >nul
 
@@ -134,7 +137,7 @@ if not exist "%PID_FILE%" goto start_failed
 for /f "usebackq delims=" %%P in ("%PID_FILE%") do set "NEW_PID=%%P"
 if not defined NEW_PID goto start_failed
 
-powershell -NoProfile -Command "$p = Get-Process -Id %NEW_PID% -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like '*winws*' }; if ($null -ne $p) { exit 0 } else { exit 1 }"
+powershell -NoProfile -Command "$p = Get-Process -Id ([int]'%NEW_PID%') -ErrorAction SilentlyContinue; if ($null -ne $p -and $p.Path -eq '%EXPECTED_EXE%') { exit 0 } else { exit 1 }"
 if %errorlevel% neq 0 goto start_failed
 
 echo  [OK] Bypass filter is ACTIVE [PID: %NEW_PID%]
@@ -156,9 +159,7 @@ if exist "%SCRIPT_DIR%stop.cmd" (
 ) else if exist "%SCRIPT_DIR%STOP.cmd" (
     call "%SCRIPT_DIR%STOP.cmd"
 ) else (
-    powershell -NoProfile -Command "Stop-Process -Id %NEW_PID% -Force -ErrorAction SilentlyContinue" >nul 2>&1
-    sc.exe stop windivert >nul 2>&1
-    sc.exe delete windivert >nul 2>&1
+    powershell -NoProfile -Command "$p = Get-Process -Id ([int]'%NEW_PID%') -ErrorAction SilentlyContinue; if ($null -ne $p -and $p.Path -eq '%EXPECTED_EXE%') { Stop-Process -Id $p.Id -Force }" >nul 2>&1
     del /f /q "%PID_FILE%" >nul 2>&1
 )
 exit /b 0
