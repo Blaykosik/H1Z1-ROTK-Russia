@@ -40,14 +40,14 @@ Play with **native direct UDP** without VPNs, VLESS tunneling, VPS nodes, or rem
 ---
 
 ## What Problem Does It Solve?
-On the tested Beeline fiber connection in the Moscow region, sustained direct UDP streams to foreign hosting datacenters (specifically OVH in France/Germany) were terminated shortly after connection establishment if left unmodified.
+On the tested Beeline fiber connection in Moscow, sustained direct UDP streams to foreign hosting datacenters (specifically OVH in France/Germany) were terminated shortly after connection establishment if left unmodified.
 
 This causes:
 * Launcher hanging during login or character loading;
 * Datacenter ping displaying "low quality" or "unavailable";
 * Connecting to the lobby successfully, but hanging indefinitely on `"Waiting for world ready"` when entering a match.
 
-While tunneling through a VPS (VPN / VLESS) can bypass the blockage, it introduces routing overhead, packet jitter, and latency spikes (~140–170 ms). This project resolves the problem **locally on your Windows PC** while keeping the route direct. In testing from the Moscow region, direct latency was **55–61 ms**.
+While tunneling through a VPS (VPN / VLESS) can bypass the blockage, it introduces routing overhead, packet jitter, and latency spikes (~140–170 ms). This project resolves the problem **locally on your Windows PC** while keeping the route direct. In testing from Moscow, direct latency was **55–61 ms**.
 
 ---
 
@@ -135,7 +135,7 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 ---
 
 ## Performance & Latency
-Testing on a direct Beeline fiber connection from the Moscow region, Russia, to OVH France:
+Testing on a direct Beeline fiber connection from Moscow, Russia, to OVH France:
 * **Direct Bypass (This Project)**: **55–61 ms** latency during the tested gameplay sessions, with substantially less jitter. No packet loss was observed during those sessions.
 * **Tunneling (VLESS / VPN)**: ~60–80 ms baseline with route jitter and periodic spikes up to 140–170 ms.
 
@@ -216,7 +216,7 @@ For Manual Mode, simply delete the downloaded folder.
 ## Requirements & Limitations
 * **OS**: Windows 10 or Windows 11 (64-bit).
 * **Privileges**: Administrator rights required to load the WinDivert kernel driver.
-* **ISP Coverage**: Tested on a Beeline fiber connection from the Moscow region to OVH. Results, including latency, may differ on other routes or ISPs.
+* **ISP Coverage**: Tested on a Beeline fiber connection from Moscow to OVH. Results, including latency, may differ on other routes or ISPs.
 
 ---
 
@@ -264,14 +264,14 @@ This project is an independent community compatibility utility. It is **not** af
 ---
 
 ## Какую проблему решает проект?
-На протестированном подключении Билайн в Московском регионе UDP-сессии с зарубежными дата-центрами OVH (Франция/Германия) обрывались вскоре после установления соединения без применения обхода.
+На протестированном подключении Билайн в Москве UDP-сессии с зарубежными дата-центрами OVH (Франция/Германия) обрывались вскоре после установления соединения без применения обхода.
 
 Это приводит к следующим симптомам:
 * Лаунчер зависает при входе в учетную запись или загрузке персонажа;
 * В меню выбора региона дата-центры отображаются со статусом «low quality» или «unavailable»;
 * В лобби заходит успешно, но при поиске игры загрузка намертво зависает на экране `"Waiting for world ready"`.
 
-Использование VPN или VLESS решает проблему обрыва, но создает дополнительный сетевой джиттер и скачки пинга (до 140–170 мс). Данный проект решает проблему **локально на вашем ПК**, сохраняя **прямой маршрут провайдера**. При тестировании в Московском регионе пинг по прямому маршруту составил **55–61 мс**.
+Использование VPN или VLESS решает проблему обрыва, но создает дополнительный сетевой джиттер и скачки пинга (до 140–170 мс). Данный проект решает проблему **локально на вашем ПК**, сохраняя **прямой маршрут провайдера**. При тестировании в Москве пинг по прямому маршруту составил **55–61 мс**.
 
 ---
 
@@ -360,7 +360,7 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 ---
 
 ## Сравнение задержки и стабильности
-Результаты тестирования на прямом подключении Билайн из Московского региона до OVH во Франции:
+Результаты тестирования на прямом подключении Билайн из Москвы до OVH во Франции:
 * **Прямой обход (данный проект)**: пинг **55–61 мс** во время тестовых игровых сессий, существенно меньше джиттера. Потери пакетов в этих сессиях не наблюдались.
 * **Туннелирование (VLESS / VPN)**: базовый пинг ~60–80 мс с колебаниями и периодическими скачками задержки до 140–170 мс.
 
@@ -441,7 +441,7 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 ## Системные требования и ограничения
 * **Операционная система**: Windows 10 или Windows 11 (64-бит).
 * **Права**: Права администратора для запуска драйвера ядра.
-* **Провайдер**: Проверено на оптоволоконном подключении Билайн из Московского региона до OVH. На других маршрутах и у других операторов результаты, включая пинг, могут отличаться.
+* **Провайдер**: Проверено на оптоволоконном подключении Билайн из Москвы до OVH. На других маршрутах и у других операторов результаты, включая пинг, могут отличаться.
 
 ---
 
