@@ -1,13 +1,13 @@
-# Packaging script for H1Z1-ROTK-Russia v1.2.1
+﻿# Packaging script for H1Z1-ROTK-Russia v1.3.0
 $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $distDir  = Join-Path $repoRoot "dist"
 $stageDir = Join-Path $distDir "stage\H1Z1-ROTK-Russia"
-$zipPath  = Join-Path $distDir "H1Z1-ROTK-Russia-v1.2.1.zip"
+$zipPath  = Join-Path $distDir "H1Z1-ROTK-Russia-v1.3.0.zip"
 
 Write-Host "=================================================="
-Write-Host " Building H1Z1-ROTK-Russia v1.2.1 Release ZIP"
+Write-Host " Building H1Z1-ROTK-Russia v1.3.0 Release ZIP"
 Write-Host "=================================================="
 
 # 1. Clean previous build artifacts
@@ -26,11 +26,12 @@ Copy-Item "$repoRoot\STOP.cmd"           -Destination "$stageDir\STOP.cmd"
 Copy-Item "$repoRoot\STATUS.cmd"         -Destination "$stageDir\STATUS.cmd"
 Copy-Item "$repoRoot\INSTALL_AUTO.cmd"   -Destination "$stageDir\INSTALL_AUTO.cmd"
 Copy-Item "$repoRoot\UNINSTALL_AUTO.cmd" -Destination "$stageDir\UNINSTALL_AUTO.cmd"
+Copy-Item "$repoRoot\DIAGNOSE.cmd"       -Destination "$stageDir\DIAGNOSE.cmd"
 
 # Generate compact bilingual README.txt for the release ZIP
 $readmeTxt = @"
 ======================================================================
-               H1Z1 ROTK Russia - Direct UDP Bypass v1.2.1
+               H1Z1 ROTK Russia - Direct UDP Bypass v1.3.0
 ======================================================================
 
 QUICK START / БЫСТРЫЙ СТАРТ:
@@ -53,6 +54,17 @@ OPTION B: MANUAL MODE (100% PORTABLE)
 3. Launch ROTK normally and play!
 4. When finished, press any key in START window or run STOP.cmd.
 
+SOMETHING DOES NOT WORK? (DIAGNOSTICS)
+1. Right-click DIAGNOSE.cmd -> "Run as administrator"
+   (best: while H1Z1 is open in the lobby).
+2. Read DIAGNOSTIC RESULT at the end - it names the exact problem.
+3. Send diagnostic-report.txt (created next to DIAGNOSE.cmd) with your
+   GitHub issue. It contains no user/PC names, personal paths, public
+   IPs or tokens. DIAGNOSE is read-only and changes nothing.
+
+LATENCY: ping depends on your ISP route to the ROTK data center.
+This tool fixes the UDP filtering problem; it does not change routing.
+
 [RU]
 ВАРИАНТ А: АВТОРЕЖИМ (РЕКОМЕНДУЕТСЯ - УСТАНОВКА В PROGRAMDATA)
 1. Нажмите правой кнопкой мыши по INSTALL_AUTO.cmd -> "Запуск от имени администратора".
@@ -70,6 +82,17 @@ OPTION B: MANUAL MODE (100% PORTABLE)
 2. Работает прямо из этой папки без какой-либо установки в систему.
 3. Запустите ROTK и играйте!
 4. После завершения игры нажмите любую клавишу в окне START или запустите STOP.cmd.
+
+ЧТО-ТО НЕ РАБОТАЕТ? (ДИАГНОСТИКА)
+1. Правой кнопкой по DIAGNOSE.cmd -> "Запуск от имени администратора"
+   (лучше всего при открытой игре в лобби).
+2. Внизу окна DIAGNOSTIC RESULT назовёт конкретную причину.
+3. Отправьте файл diagnostic-report.txt (появится рядом с DIAGNOSE.cmd)
+   вместе с GitHub issue. В нём нет имени пользователя/ПК, личных путей,
+   публичных IP и токенов. DIAGNOSE ничего не меняет в системе.
+
+ПИНГ зависит от маршрута вашего провайдера до датацентра ROTK.
+Инструмент устраняет проблему UDP-фильтрации, но не меняет маршрут.
 
 ----------------------------------------------------------------------
 SECURITY, TRUST & PRIVACY / БЕЗОПАСНОСТЬ И ПРИВАТНОСТЬ:
@@ -95,6 +118,7 @@ Copy-Item "$repoRoot\bin\WinDivert64.sys"  -Destination "$runtimeDir\WinDivert64
 Copy-Item "$repoRoot\bin\cygwin1.dll"      -Destination "$runtimeDir\cygwin1.dll"
 Copy-Item "$repoRoot\bin\stun.bin"         -Destination "$runtimeDir\stun.bin"
 Copy-Item "$repoRoot\scripts\watcher.ps1"  -Destination "$runtimeDir\watcher.ps1"
+Copy-Item "$repoRoot\scripts\diagnose.ps1" -Destination "$runtimeDir\diagnose.ps1"
 Copy-Item "$repoRoot\config\filter.txt"    -Destination "$runtimeDir\filter.txt"
 Copy-Item "$repoRoot\UNINSTALL_AUTO.cmd"   -Destination "$runtimeDir\UNINSTALL_AUTO.cmd"
 Copy-Item "$repoRoot\STATUS.cmd"           -Destination "$runtimeDir\STATUS.cmd"
@@ -115,9 +139,20 @@ Copy-Item "$repoRoot\LICENSES\LICENSE.cygwin.txt"    -Destination "$licenseDir\L
 Copy-Item "$repoRoot\LICENSES\LICENSE.windivert.txt" -Destination "$licenseDir\LICENSE.windivert.txt"
 Copy-Item "$repoRoot\LICENSES\LICENSE.zapret.txt"    -Destination "$licenseDir\LICENSE.zapret.txt"
 
-# 6. Normalize timestamps for deterministic archive build
+# 6a. Normalize text line endings to CRLF regardless of the build machine's git settings
+#     (cmd.exe mis-parses labels in LF-only batch files).
+Write-Host "[*] Normalizing text files to CRLF..."
+Get-ChildItem -Path $stageDir -Recurse -File -Include *.cmd, *.ps1, *.conf, filter.txt | ForEach-Object {
+    $raw = [System.IO.File]::ReadAllBytes($_.FullName)
+    $hasBom = ($raw.Length -ge 3 -and $raw[0] -eq 0xEF -and $raw[1] -eq 0xBB -and $raw[2] -eq 0xBF)
+    $text = [System.Text.Encoding]::UTF8.GetString($raw, $(if ($hasBom) { 3 } else { 0 }), $raw.Length - $(if ($hasBom) { 3 } else { 0 }))
+    $text = ($text -replace "`r`n", "`n") -replace "`n", "`r`n"
+    [System.IO.File]::WriteAllText($_.FullName, $text, (New-Object System.Text.UTF8Encoding($hasBom)))
+}
+
+# 6b. Normalize timestamps for deterministic archive build
 Write-Host "[*] Normalizing file timestamps for reproducible archive..."
-$fixedDate = [DateTime]::new(2026, 9, 27, 0, 0, 0, [System.DateTimeKind]::Utc)
+$fixedDate = [DateTime]::new(2026, 10, 3, 0, 0, 0, [System.DateTimeKind]::Utc)
 Get-ChildItem -Path (Join-Path $distDir "stage") -Recurse -Force | ForEach-Object {
     $_.LastWriteTimeUtc = $fixedDate
     $_.CreationTimeUtc = $fixedDate
@@ -134,8 +169,8 @@ $zipHash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash
 Write-Host "[*] Release ZIP SHA256: $zipHash"
 
 $sumsContent = @(
-    "# Release Archive (v1.2.1 Stable):",
-    "$zipHash  H1Z1-ROTK-Russia-v1.2.1.zip",
+    "# Release Archive (v1.3.0):",
+    "$zipHash  H1Z1-ROTK-Russia-v1.3.0.zip",
     "",
     "# Bundled Runtime Binaries (bin/):",
     "$((Get-FileHash "$repoRoot\bin\winws.exe" -Algorithm SHA256).Hash)  bin/winws.exe",

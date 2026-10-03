@@ -2,7 +2,7 @@
 setlocal
 
 :: 1. Check for Administrator privileges
-net session >nul 2>&1
+fltmc >nul 2>&1
 if %errorlevel% equ 0 goto is_admin
 
 echo.
@@ -63,7 +63,7 @@ goto layout_resolved
 set "PID_FILE=%BIN_DIR%\.winws.pid"
 set "EXPECTED_EXE=%BIN_DIR%\winws.exe"
 
-title H1Z1 ROTK Russia - Direct UDP Bypass v1.2.1 (Portable)
+title H1Z1 ROTK Russia - Direct UDP Bypass v1.3.0 (Portable)
 color 0A
 
 :: 3. Verify presence of required runtime files
@@ -114,7 +114,7 @@ if exist "%PID_FILE%" del /f /q "%PID_FILE%" >nul 2>&1
 :do_start
 echo.
 echo ======================================================================
-echo        H1Z1 ROTK Russia - Direct UDP Bypass v1.2.1 (Portable)
+echo        H1Z1 ROTK Russia - Direct UDP Bypass v1.3.0 (Portable)
 echo ======================================================================
 echo.
 echo  [*] Mode              : Portable (runs directly from this folder)
@@ -125,21 +125,24 @@ echo      - Protocol / Ports: UDP 20000 - 23000
 echo.
 echo  [*] Network Profile   : Native Direct UDP [No VPN / No Proxy / No Relay]
 echo  [*] Desync Method     : Single-packet STUN prefix [cutoff=d2]
-echo  [*] Observed Latency  : ~55 - 61 ms [on tested ISP path]
+echo  [*] Latency           : defined by your ISP route to ROTK [not changed by this tool]
 echo.
 echo  [*] Starting WinDivert filter...
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$proc = Start-Process -FilePath '%EXPECTED_EXE%' -ArgumentList '@%CONF_FILE%' -WorkingDirectory '%BIN_DIR%' -WindowStyle Minimized -PassThru; $proc.Id | Out-File -FilePath '%PID_FILE%' -Encoding ascii"
+:: Start winws and validate it for 2.5 s. winws exits immediately with the Win32 error code
+:: when WinDivertOpen fails, so the exit code identifies the exact driver problem.
+set "LAST_ERR_FILE=%BIN_DIR%\.last_start_error.txt"
+set "START_RESULT="
+for /f "usebackq delims=" %%R in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $proc = Start-Process -FilePath '%EXPECTED_EXE%' -ArgumentList '@%CONF_FILE%' -WorkingDirectory '%BIN_DIR%' -WindowStyle Minimized -PassThru -ErrorAction Stop } catch { $e = $_.Exception; while ($e -and -not ($e -is [ComponentModel.Win32Exception])) { $e = $e.InnerException }; $c = -1; if ($e) { $c = $e.NativeErrorCode }; Write-Output ('launch ' + $c); exit }; $null = $proc.Handle; $t = [Diagnostics.Stopwatch]::StartNew(); while (-not $proc.HasExited -and $t.ElapsedMilliseconds -lt 2500) { Start-Sleep -Milliseconds 250 }; if ($proc.HasExited) { Write-Output ('driver ' + $proc.ExitCode) } else { $proc.Id | Out-File -FilePath '%PID_FILE%' -Encoding ascii; Write-Output ('ok ' + $proc.Id) }"`) do set "START_RESULT=%%R"
 
-ping 127.0.0.1 -n 3 >nul
+for /f "tokens=1,2" %%A in ("%START_RESULT%") do (
+    set "START_STAGE=%%A"
+    set "START_CODE=%%B"
+)
+if not "%START_STAGE%"=="ok" goto start_failed
+set "NEW_PID=%START_CODE%"
 
-if not exist "%PID_FILE%" goto start_failed
-for /f "usebackq delims=" %%P in ("%PID_FILE%") do set "NEW_PID=%%P"
-if not defined NEW_PID goto start_failed
-
-powershell -NoProfile -Command "$p = Get-Process -Id ([int]'%NEW_PID%') -ErrorAction SilentlyContinue; if ($null -ne $p -and $p.Path -eq '%EXPECTED_EXE%') { exit 0 } else { exit 1 }"
-if %errorlevel% neq 0 goto start_failed
-
+if exist "%LAST_ERR_FILE%" del /f /q "%LAST_ERR_FILE%" >nul 2>&1
 echo  [OK] Bypass filter is ACTIVE [PID: %NEW_PID%]
 echo.
 echo ----------------------------------------------------------------------
@@ -163,9 +166,20 @@ if exist "%SCRIPT_DIR%STOP.cmd" (
 exit /b 0
 
 :start_failed
-echo  [ERROR] Failed to start winws.exe.
-echo  Please verify that your antivirus or another WinDivert tool [zapret/GoodbyeDPI]
-echo  is not blocking or holding the driver.
+if not defined START_STAGE set "START_STAGE=driver"
+if not defined START_CODE set "START_CODE=-1"
+if exist "%PID_FILE%" del /f /q "%PID_FILE%" >nul 2>&1
+powershell -NoProfile -Command "((Get-Date -Format s) + ';stage=%START_STAGE%;code=%START_CODE%;source=START') | Out-File -FilePath '%LAST_ERR_FILE%' -Encoding ascii" >nul 2>&1
+
+set "ENGINE="
+if exist "%BIN_DIR%\diagnose.ps1" set "ENGINE=%BIN_DIR%\diagnose.ps1"
+if not defined ENGINE if exist "%ROOT_DIR%\scripts\diagnose.ps1" set "ENGINE=%ROOT_DIR%\scripts\diagnose.ps1"
+if defined ENGINE (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%ENGINE%" -Mode Startup -StartupStage %START_STAGE% -StartupCode %START_CODE%
+) else (
+    echo  [ERROR] winws.exe failed to start [stage: %START_STAGE%, code: %START_CODE%].
+    echo  Run DIAGNOSE.cmd for details.
+)
 echo.
 pause
 exit /b 1
