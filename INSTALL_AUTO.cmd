@@ -2,7 +2,7 @@
 setlocal
 
 :: 1. Check for Administrator privileges
-net session >nul 2>&1
+fltmc >nul 2>&1
 if %errorlevel% equ 0 goto is_admin
 
 echo.
@@ -26,12 +26,12 @@ exit /b 1
 set "TARGET_DIR=%ProgramData%\H1Z1-ROTK-Russia"
 set "TASK_NAME=H1Z1-ROTK-Russia Auto Mode"
 
-title H1Z1 ROTK Russia - Install Auto Mode (v1.2.1)
+title H1Z1 ROTK Russia - Install Auto Mode (v1.3.0)
 color 0B
 
 echo.
 echo ======================================================================
-echo        H1Z1 ROTK Russia - Install Auto Mode (v1.2.1)
+echo        H1Z1 ROTK Russia - Install Auto Mode (v1.3.0)
 echo ======================================================================
 echo.
 echo  Auto Mode features:
@@ -55,24 +55,57 @@ if exist "%SCRIPT_DIR%winws.exe" goto src_runtime_direct
 :src_release_root
 set "SRC_RUNTIME=%SCRIPT_DIR%_runtime"
 set "SRC_ROOT=%SCRIPT_DIR%"
-goto copy_files
+set "SRC_ENGINE=%SCRIPT_DIR%_runtime\diagnose.ps1"
+set "NEXT_STEP=copy_files"
+goto preflight
 
 :src_repo_root
 set "SRC_RUNTIME=%SCRIPT_DIR%bin"
 set "SRC_ROOT=%SCRIPT_DIR%"
-goto copy_repo_files
+set "SRC_ENGINE=%SCRIPT_DIR%scripts\diagnose.ps1"
+set "NEXT_STEP=copy_repo_files"
+goto preflight
 
 :src_repo_scripts
 pushd "%SCRIPT_DIR%.."
 set "SRC_ROOT=%CD%"
 popd
 set "SRC_RUNTIME=%SRC_ROOT%\bin"
-goto copy_repo_files
+set "SRC_ENGINE=%SRC_ROOT%\scripts\diagnose.ps1"
+set "NEXT_STEP=copy_repo_files"
+goto preflight
 
 :src_runtime_direct
 set "SRC_RUNTIME=%SCRIPT_DIR%"
 set "SRC_ROOT=%SCRIPT_DIR%"
-goto copy_files
+set "SRC_ENGINE=%SCRIPT_DIR%diagnose.ps1"
+set "NEXT_STEP=copy_files"
+goto preflight
+
+:preflight
+:: Detect obvious problems BEFORE installing (admin, runtime files, driver signature, BFE).
+:: Read-only: nothing is loaded, changed or removed here.
+if not exist "%SRC_ENGINE%" goto preflight_missing
+powershell -NoProfile -ExecutionPolicy Bypass -File "%SRC_ENGINE%" -Mode Preflight
+set "PREFLIGHT_RC=%errorlevel%"
+echo.
+if "%PREFLIGHT_RC%"=="1" goto preflight_blocked
+if "%PREFLIGHT_RC%"=="2" echo  [WARN] Warnings were found above. Installation continues; run DIAGNOSE.cmd if ROTK does not connect.
+if "%PREFLIGHT_RC%"=="2" echo.
+goto %NEXT_STEP%
+
+:preflight_missing
+echo  [ERROR] diagnose.ps1 is missing. Please extract the complete release archive.
+echo.
+pause
+exit /b 1
+
+:preflight_blocked
+echo  [ERROR] Installation aborted: a blocking problem was found (see above).
+echo  Fix it and run INSTALL_AUTO.cmd again, or run DIAGNOSE.cmd for details.
+echo.
+pause
+exit /b 1
 
 :copy_files
 echo  [*] Creating installation directory: %TARGET_DIR%...
@@ -88,6 +121,8 @@ copy /y "%SRC_RUNTIME%\stun.bin" "%TARGET_DIR%\stun.bin" >nul
 copy /y "%SRC_RUNTIME%\filter.txt" "%TARGET_DIR%\filter.txt" >nul
 copy /y "%SRC_RUNTIME%\rotk_winws.conf" "%TARGET_DIR%\rotk_winws.conf" >nul
 copy /y "%SRC_RUNTIME%\watcher.ps1" "%TARGET_DIR%\watcher.ps1" >nul
+copy /y "%SRC_ENGINE%" "%TARGET_DIR%\diagnose.ps1" >nul
+if exist "%SRC_ROOT%\DIAGNOSE.cmd" copy /y "%SRC_ROOT%\DIAGNOSE.cmd" "%TARGET_DIR%\DIAGNOSE.cmd" >nul
 
 if exist "%SRC_ROOT%\UNINSTALL_AUTO.cmd" copy /y "%SRC_ROOT%\UNINSTALL_AUTO.cmd" "%TARGET_DIR%\UNINSTALL_AUTO.cmd" >nul
 if exist "%SRC_RUNTIME%\UNINSTALL_AUTO.cmd" copy /y "%SRC_RUNTIME%\UNINSTALL_AUTO.cmd" "%TARGET_DIR%\UNINSTALL_AUTO.cmd" >nul
@@ -110,6 +145,8 @@ copy /y "%SRC_ROOT%\bin\cygwin1.dll" "%TARGET_DIR%\cygwin1.dll" >nul
 copy /y "%SRC_ROOT%\bin\stun.bin" "%TARGET_DIR%\stun.bin" >nul
 copy /y "%SRC_ROOT%\config\filter.txt" "%TARGET_DIR%\filter.txt" >nul
 copy /y "%SRC_ROOT%\scripts\watcher.ps1" "%TARGET_DIR%\watcher.ps1" >nul
+copy /y "%SRC_ENGINE%" "%TARGET_DIR%\diagnose.ps1" >nul
+if exist "%SRC_ROOT%\DIAGNOSE.cmd" copy /y "%SRC_ROOT%\DIAGNOSE.cmd" "%TARGET_DIR%\DIAGNOSE.cmd" >nul
 if exist "%SRC_ROOT%\UNINSTALL_AUTO.cmd" copy /y "%SRC_ROOT%\UNINSTALL_AUTO.cmd" "%TARGET_DIR%\UNINSTALL_AUTO.cmd" >nul
 if exist "%SRC_ROOT%\STATUS.cmd" copy /y "%SRC_ROOT%\STATUS.cmd" "%TARGET_DIR%\STATUS.cmd" >nul
 if exist "%SRC_ROOT%\LICENSES" xcopy /y /s /q "%SRC_ROOT%\LICENSES\*" "%TARGET_DIR%\licenses\" >nul
@@ -126,6 +163,8 @@ if exist "%SRC_ROOT%\LICENSES" xcopy /y /s /q "%SRC_ROOT%\LICENSES\*" "%TARGET_D
 goto configure_task
 
 :configure_task
+> "%TARGET_DIR%\VERSION.txt" echo v1.3.0
+if exist "%TARGET_DIR%\.last_start_error.txt" del /f /q "%TARGET_DIR%\.last_start_error.txt" >nul 2>&1
 :: 4. Stop pre-existing task instance and any old watcher running from ProgramData
 echo  [*] Cleaning up any previous installation...
 schtasks /query /tn "%TASK_NAME%" >nul 2>&1
@@ -147,10 +186,16 @@ if exist "%TARGET_DIR%\.winws.pid" (
 )
 
 :: 5. Register scheduled task pointing to %ProgramData%\H1Z1-ROTK-Russia\watcher.ps1
+::    No 72-hour execution limit, allowed on battery power, single instance.
 echo  [*] Registering scheduled task [%TASK_NAME%]...
-schtasks /create /tn "%TASK_NAME%" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%TARGET_DIR%\watcher.ps1\"" /sc onlogon /rl highest /f >nul 2>&1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $a = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%TARGET_DIR%\watcher.ps1\"'; $t = New-ScheduledTaskTrigger -AtLogOn; $p = New-ScheduledTaskPrincipal -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) -LogonType Interactive -RunLevel Highest; $s = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew; Register-ScheduledTask -TaskName '%TASK_NAME%' -Action $a -Trigger $t -Principal $p -Settings $s -Force -ErrorAction Stop | Out-Null; exit 0 } catch { exit 1 }" >nul 2>&1
+if %errorlevel% equ 0 goto task_registered
 
+:: Fallback for systems without the ScheduledTasks PowerShell module.
+schtasks /create /tn "%TASK_NAME%" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%TARGET_DIR%\watcher.ps1\"" /sc onlogon /rl highest /f >nul 2>&1
 if %errorlevel% neq 0 goto error_task_create
+
+:task_registered
 
 echo  [OK] Task registered successfully.
 
@@ -187,9 +232,12 @@ echo  [*] IMPORTANT UX NOTE:
 echo      The bypass runtime is now installed in ProgramData.
 echo      You can safely MOVE or DELETE the downloaded release folder!
 echo.
-echo  To check current status at any time, run STATUS.cmd.
-echo  To uninstall Auto Mode, run UNINSTALL_AUTO.cmd (from this folder
-echo  or directly from %TARGET_DIR%\UNINSTALL_AUTO.cmd).
+echo  Installation complete.
+echo    - Run STATUS.cmd to check the current state.
+echo    - Run DIAGNOSE.cmd if ROTK does not connect (a copy is also in
+echo      %TARGET_DIR%\DIAGNOSE.cmd).
+echo    - To uninstall, run UNINSTALL_AUTO.cmd (from this folder or from
+echo      %TARGET_DIR%\UNINSTALL_AUTO.cmd).
 echo.
 pause
 exit /b 0

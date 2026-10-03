@@ -2,7 +2,7 @@
 setlocal
 
 :: 1. Check for Administrator privileges
-net session >nul 2>&1
+fltmc >nul 2>&1
 if %errorlevel% equ 0 goto is_admin
 
 echo.
@@ -63,7 +63,7 @@ for /f "usebackq delims=" %%P in ("%PID_FILE%") do set "TARGET_PID=%%P"
 if not defined TARGET_PID goto clear_pid
 
 :: Validate PID and path before terminating
-powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%EXPECTED_EXE%'); $p = Get-Process -Id ([int]'%TARGET_PID%') -ErrorAction SilentlyContinue; if ($null -ne $p -and [System.IO.Path]::GetFullPath($p.Path) -eq $exp) { Stop-Process -Id $p.Id -Force; exit 0 } else { exit 1 }"
+powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%EXPECTED_EXE%'); $p = Get-Process -Id ([int]'%TARGET_PID%') -ErrorAction SilentlyContinue; if ($null -ne $p -and [System.IO.Path]::GetFullPath($p.Path) -eq $exp) { Stop-Process -Id $p.Id -Force; $p.WaitForExit(3000) | Out-Null; exit 0 } else { exit 1 }"
 if %errorlevel% equ 0 (
     echo  [*] Terminated project winws process [PID: %TARGET_PID%]
     set "STOPPED=1"
@@ -79,7 +79,7 @@ if "%STOPPED%"=="0" echo  [*] No tracked active winws process found for this por
 
 :: Safe driver isolation check: only stop WinDivert if NO OTHER winws is running on the system
 echo  [*] Checking driver service isolation...
-powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%EXPECTED_EXE%'); $others = @(Get-Process -Name 'winws' -ErrorAction SilentlyContinue | Where-Object { try { [System.IO.Path]::GetFullPath($_.Path) -ne $exp } catch { $true } }); $gdpi = Get-Process -Name 'goodbyedpi' -ErrorAction SilentlyContinue; if ($others.Count -eq 0 -and $null -eq $gdpi) { sc.exe stop windivert > $null 2>&1 }" >nul 2>&1
+powershell -NoProfile -Command "$exp = [System.IO.Path]::GetFullPath('%EXPECTED_EXE%'); $others = @(Get-Process -Name 'winws' -ErrorAction SilentlyContinue | Where-Object { try { [System.IO.Path]::GetFullPath($_.Path) -ne $exp } catch { $true } }); $gdpi = Get-Process -Name 'goodbyedpi' -ErrorAction SilentlyContinue; if ($others.Count -eq 0 -and $null -eq $gdpi) { for ($i = 0; $i -lt 4; $i++) { sc.exe stop windivert > $null 2>&1; if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq 1060 -or $LASTEXITCODE -eq 1062) { break }; Start-Sleep -Milliseconds 500 } }" >nul 2>&1
 
 echo.
 echo  [OK] Project bypass is STOPPED.
