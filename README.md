@@ -61,7 +61,7 @@ Verify the download checksum in PowerShell:
 ```powershell
 Get-FileHash .\H1Z1-ROTK-Russia-v1.3.0.zip -Algorithm SHA256
 ```
-Expected SHA-256: `657C44C9B4560171C17B241CF786CDB0309B55543C9D10D8480EFC10AF822DFA`
+Expected SHA-256: `819242CF433573E6A0002EFF6CCEEB317F323D19EAF9E673249A08B223694E9A`
 
 ---
 
@@ -308,7 +308,7 @@ This project is an independent community compatibility utility. It is **not** af
 ```powershell
 Get-FileHash .\H1Z1-ROTK-Russia-v1.3.0.zip -Algorithm SHA256
 ```
-Ожидаемый хэш SHA-256: `657C44C9B4560171C17B241CF786CDB0309B55543C9D10D8480EFC10AF822DFA`
+Ожидаемый хэш SHA-256: `819242CF433573E6A0002EFF6CCEEB317F323D19EAF9E673249A08B223694E9A`
 
 ---
 
