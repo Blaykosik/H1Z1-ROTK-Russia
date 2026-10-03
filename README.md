@@ -5,8 +5,9 @@
 Local direct-connect fix for **H1Z1 Return of the King (ROTK)** in Russia.  
 Play with **native direct UDP** without VPNs, VLESS tunneling, VPS nodes, or remote relays.
 
-* **Current Stable**: `v1.2.1`
-* **Download**: [Release v1.2.1 Archive](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.2.1) (`H1Z1-ROTK-Russia-v1.2.1.zip`)
+* **Current Stable**: `v1.3.0` (universal diagnostics / multi-ISP support)
+* **Download**: [Release v1.3.0 Archive](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.0) (`H1Z1-ROTK-Russia-v1.3.0.zip`)
+* **Something does not work?** Run `DIAGNOSE.cmd` and attach `diagnostic-report.txt` to your GitHub issue.
 
 ---
 
@@ -40,25 +41,25 @@ Play with **native direct UDP** without VPNs, VLESS tunneling, VPS nodes, or rem
 ---
 
 ## What Problem Does It Solve?
-On the tested Beeline fiber connection in Moscow, sustained direct UDP streams to foreign hosting datacenters (specifically OVH in France/Germany) were terminated shortly after connection establishment if left unmodified.
+On tested Russian ISP connections (originally validated on Beeline and later tested on MTS, both in Moscow), sustained direct UDP streams to foreign hosting datacenters (specifically OVH in France/Germany) were terminated shortly after connection establishment if left unmodified.
 
 This causes:
 * Launcher hanging during login or character loading;
 * Datacenter ping displaying "low quality" or "unavailable";
 * Connecting to the lobby successfully, but hanging indefinitely on `"Waiting for world ready"` when entering a match.
 
-While tunneling through a VPS (VPN / VLESS) can bypass the blockage, it introduces routing overhead, packet jitter, and latency spikes (~140–170 ms). This project resolves the problem **locally on your Windows PC** while keeping the route direct. In testing from Moscow, direct latency was **55–61 ms**.
+While tunneling through a VPS (VPN / VLESS) can bypass the blockage, it introduces routing overhead, packet jitter, and latency spikes (~140–170 ms). This project resolves the problem **locally on your Windows PC**, keeping your route **100% direct**: you get the native latency of your ISP's own route to ROTK (for example ~55–61 ms was observed on Beeline in Moscow). It does not change or accelerate that route.
 
 ---
 
 ## Quick Start
-1. Download **`H1Z1-ROTK-Russia-v1.2.1.zip`** from [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.2.1).
+1. Download **`H1Z1-ROTK-Russia-v1.3.0.zip`** from [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.0).
 2. Extract the ZIP archive to any folder.
 3. Choose either **Auto Mode** (install once, fully automated) or **Manual Mode** (portable, no install).
 
 Verify the download checksum in PowerShell:
 ```powershell
-Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
+Get-FileHash .\H1Z1-ROTK-Russia-v1.3.0.zip -Algorithm SHA256
 ```
 Expected SHA-256: `657C44C9B4560171C17B241CF786CDB0309B55543C9D10D8480EFC10AF822DFA`
 
@@ -87,13 +88,16 @@ Manual Mode does not install persistent components. WinDivert is loaded temporar
 ---
 
 ## Status & Diagnostics
-Run **`STATUS.cmd`** at any time to inspect:
-* **Auto Mode Task**: Whether the Windows logon task is active;
-* **Auto Watcher**: Whether the background WMI monitor process is running;
-* **Game Process**: Whether `H1Z1.exe` is currently detected;
-* **Project Bypass**: Whether this project's `winws` filter is active (PID);
-* **Other winws**: Checks if an independent `winws` instance (e.g. for YouTube/Discord) is running—it will be reported as `not managed`, confirming strict isolation;
-* **Driver Service**: Current status of the `WinDivert` kernel driver.
+**`STATUS.cmd`** - quick overview at any time: Auto Mode task and watcher, `H1Z1.exe`, this project's `winws` (PID and path), other `winws` instances (`not managed`), the ROTK route, and the **WinDivert driver** state. Driver state is resolved from several sources (loaded kernel modules, Service Control Manager, `Win32_SystemDriver`, `driverquery`, service records and WinDivert's own LOAD/UNLOAD events), so it no longer reports a false `NOT INSTALLED` while the bypass is active. If the last start failed, STATUS shows the exact Windows error.
+
+**`DIAGNOSE.cmd`** - full self-diagnosis when ROTK does not connect:
+1. Right-click **`DIAGNOSE.cmd`** -> **Run as administrator** (best while H1Z1 is open in the lobby or in a match).
+2. Read **DIAGNOSTIC RESULT** at the end: every line is `[OK]`, `[WARN]` or `[FAIL]` with a suggested action.
+3. Attach **`diagnostic-report.txt`** (created next to `DIAGNOSE.cmd`, or on the Desktop) to your GitHub issue.
+
+DIAGNOSE is **read-only**: it never removes drivers, stops VPNs or other tools, changes routes, touches Defender or kills processes. It checks system, project files and hashes, WinDivert (files, signature, BFE, driver state, start errors, stale service records), Code Integrity / Defender / Smart App Control hints, conflicting tools (other zapret, GoodbyeDPI, ExitLag, v2rayN/Xray TUN, WireGuard, OpenVPN, Wintun/TAP adapters), network (adapters, gateway, MTU, default routes, routes to ROTK, stale persistent routes) and ROTK latency (ICMP, hop path, game-reported ping). While the game runs, a 15-second `pktmon` observation shows the real ROTK endpoints and whether they are covered by `filter.txt` (`ACTIVE ROTK ENDPOINT OUTSIDE CURRENT FILTER`).
+
+The report is sanitized for public posting: no user/PC names, SID, personal paths, public IPs, IPv6, Steam IDs, tokens, VLESS/Reality data or subscription URLs. Public IPs of your ISP's routers are masked (`a.b.x.x`); ROTK server addresses stay visible. Network probes are ICMP echo only (your gateway and ROTK hosts); no external service is contacted and your ISP/public IP is not looked up.
 
 ---
 
@@ -135,9 +139,14 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 ---
 
 ## Performance & Latency
-Testing on a direct Beeline fiber connection from Moscow, Russia, to OVH France:
-* **Direct Bypass (This Project)**: **55–61 ms** latency during the tested gameplay sessions, with substantially less jitter. No packet loss was observed during those sessions.
+**Latency depends on ISP routing and destination.** The project removes the observed UDP filtering problem; it does not alter the physical/BGP route, and a local desync profile cannot make a route shorter. No specific ping is guaranteed.
+
+Observed during testing (direct physical Ethernet, Moscow, to OVH):
+* **Beeline, direct bypass**: ~55–61 ms steady game latency, no packet loss observed in the tested sessions.
+* **MTS, direct bypass**: connects and plays; latency is reported by DIAGNOSE (ICMP route RTT, hop path and game-reported ping side by side).
 * **Tunneling (VLESS / VPN)**: ~60–80 ms baseline with route jitter and periodic spikes up to 140–170 ms.
+
+If your ping is higher than expected, run `DIAGNOSE.cmd` while in the lobby: it shows whether the extra delay is on the ISP route, caused by a VPN/TUN route conflict or a stale route, or comes from a different ROTK server.
 
 ---
 
@@ -196,9 +205,24 @@ All bundled third-party binaries are byte-for-byte unchanged from their document
 ---
 
 ## Troubleshooting
+**First step for any problem: run `DIAGNOSE.cmd` as administrator** and follow the suggested action. `START.cmd` and Auto Mode also record the exact Windows error when `winws.exe` cannot start.
+
+| Error / verdict | Meaning | What to do |
+|---|---|---|
+| `2` / `3` + *Stale service* | A leftover `WinDivert` service from another tool or an old copy points to a deleted folder | `sc delete WinDivert` in an administrator Command Prompt (WinDivert recreates it) |
+| `5` Access denied | Not elevated, or security software blocks drivers | Run as administrator; check your antivirus |
+| `225` / `226` | Antivirus blocked or deleted a file | Restore from quarantine, add a folder exclusion |
+| `577` Invalid image hash | Code Integrity refused the driver signature | Re-download; see Code Integrity events in the report |
+| `654` Prior unload failed | Another WinDivert version is still loaded | Close other WinDivert tools and reboot |
+| `1275` Driver blocked | Driver blocklist / Memory Integrity / security policy | Driver cannot load while that policy is active |
+| `1753` / BFE not running | Base Filtering Engine service is disabled | Enable and start the *Base Filtering Engine* service |
+| `4551` / Smart App Control | Unsigned `winws.exe` blocked by WDAC / Smart App Control | Allow it or disable Smart App Control |
+| `TUN_ROUTE_CONFLICT` | ROTK traffic goes into a VPN/TUN adapter | Add DIRECT rules for `H1Z1.exe` / ROTK IPs or disable TUN |
+| `STALE_PERSISTENT_ROUTE` | A saved route points to an old router's gateway | Delete or recreate the route for the current gateway |
+| `ACTIVE ROTK ENDPOINT OUTSIDE CURRENT FILTER` | ROTK uses a new server range | Open an issue with the report; the filter will be verified and extended |
+
 * **"Administrator privileges are required"**: Right-click the `.cmd` script and choose **Run as administrator**. WinDivert requires elevation to filter packets.
-* **Lobby connects, but Match loading hangs ("Waiting for world ready")**: ROTK might have allocated a match server in a newly added IP block outside `162.19.126.0/24`. Check your game log (`H1Z1 PlayClient (Live).log`) for the destination IP and open a GitHub Issue.
-* **`winws.exe` fails to start**: Another program using WinDivert (such as GoodbyeDPI or a conflicting zapret instance) may be running. Stop the conflicting tool or run `STOP.cmd` and try again.
+* **Lobby connects, but Match loading hangs ("Waiting for world ready")**: ROTK might have allocated a match server outside `162.19.126.0/24`. Run `DIAGNOSE.cmd` while the game is stuck: it lists the live endpoints and flags any outside the filter.
 * **Antivirus quarantined a file**: Check your antivirus protection history, verify the file SHA-256 against the table above, and restore/exclude the file if verified.
 * **How to verify status**: Run **`STATUS.cmd`** to see whether the watcher, game, bypass, and driver are active.
 
@@ -216,7 +240,7 @@ For Manual Mode, simply delete the downloaded folder.
 ## Requirements & Limitations
 * **OS**: Windows 10 or Windows 11 (64-bit).
 * **Privileges**: Administrator rights required to load the WinDivert kernel driver.
-* **ISP Coverage**: Tested on a Beeline fiber connection from Moscow to OVH. Results, including latency, may differ on other routes or ISPs.
+* **ISP Coverage**: Originally validated on Beeline and later tested on MTS in Moscow. ISP routing and latency vary; the project targets ROTK UDP connectivity rather than route acceleration. One baseline strategy is used for all ISPs; fallback profiles will only be added with evidence from real reports.
 
 ---
 
@@ -264,25 +288,25 @@ This project is an independent community compatibility utility. It is **not** af
 ---
 
 ## Какую проблему решает проект?
-На протестированном подключении Билайн в Москве UDP-сессии с зарубежными дата-центрами OVH (Франция/Германия) обрывались вскоре после установления соединения без применения обхода.
+На протестированных российских провайдерах (изначально проверено на Билайне, затем на МТС, оба в Москве) UDP-сессии с зарубежными дата-центрами OVH (Франция/Германия) обрывались вскоре после установления соединения без применения обхода.
 
 Это приводит к следующим симптомам:
 * Лаунчер зависает при входе в учетную запись или загрузке персонажа;
 * В меню выбора региона дата-центры отображаются со статусом «low quality» или «unavailable»;
 * В лобби заходит успешно, но при поиске игры загрузка намертво зависает на экране `"Waiting for world ready"`.
 
-Использование VPN или VLESS решает проблему обрыва, но создает дополнительный сетевой джиттер и скачки пинга (до 140–170 мс). Данный проект решает проблему **локально на вашем ПК**, сохраняя **прямой маршрут провайдера**. При тестировании в Москве пинг по прямому маршруту составил **55–61 мс**.
+Использование VPN или VLESS решает проблему обрыва, но создает дополнительный сетевой джиттер и скачки пинга (до 140–170 мс). Данный проект решает проблему **локально на вашем ПК**, сохраняя **прямой маршрут провайдера**: пинг равен родной задержке маршрута вашего провайдера до ROTK (например, на Билайне в Москве наблюдалось ~55–61 мс). Сам маршрут проект не меняет и не ускоряет.
 
 ---
 
 ## Быстрый старт
-1. Скачайте архив **`H1Z1-ROTK-Russia-v1.2.1.zip`** со страницы [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.2.1).
+1. Скачайте архив **`H1Z1-ROTK-Russia-v1.3.0.zip`** со страницы [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.0).
 2. Распакуйте архив в удобное место.
 3. Выберите подходящий режим: **Авторежим** (установка в один клик, полностью автоматическая работа) или **Ручной режим** (портативный запуск без установки).
 
 Проверка контрольной суммы архива в PowerShell:
 ```powershell
-Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
+Get-FileHash .\H1Z1-ROTK-Russia-v1.3.0.zip -Algorithm SHA256
 ```
 Ожидаемый хэш SHA-256: `657C44C9B4560171C17B241CF786CDB0309B55543C9D10D8480EFC10AF822DFA`
 
@@ -312,13 +336,16 @@ Get-FileHash .\H1Z1-ROTK-Russia-v1.2.1.zip -Algorithm SHA256
 ---
 
 ## Диагностика и статус
-Запустите **`STATUS.cmd`** в любое время для проверки текущего состояния:
-* **Auto Mode Task**: статус задачи авторежима в Планировщике Windows;
-* **Auto Watcher**: статус и PID фонового процесса WMI-монитора;
-* **Game Process**: обнаружен ли запущенный процесс `H1Z1.exe`;
-* **H1Z1 ROTK Bypass**: статус и PID рабочего процесса `winws`;
-* **Other winws**: проверка наличия сторонних копий `winws` (отображаются как `not managed`, подтверждая отсутствие вмешательства);
-* **Driver Service**: текущее состояние службы драйвера `WinDivert`.
+**`STATUS.cmd`** - быстрый обзор: задача и вотчер авторежима, `H1Z1.exe`, `winws` проекта (PID и путь), сторонние `winws` (`not managed`), маршрут до ROTK и состояние **драйвера WinDivert**. Состояние драйвера определяется по нескольким источникам (загруженные модули ядра, SCM, `Win32_SystemDriver`, `driverquery`, записи служб и собственные события WinDivert LOAD/UNLOAD), поэтому ложного `NOT INSTALLED` при активном обходе больше нет. Если последний запуск не удался, STATUS покажет точный код ошибки Windows.
+
+**`DIAGNOSE.cmd`** - полная самодиагностика, если ROTK не подключается:
+1. Правой кнопкой по **`DIAGNOSE.cmd`** -> **«Запуск от имени администратора»** (лучше всего при открытой игре в лобби или в матче).
+2. Внизу смотрите **DIAGNOSTIC RESULT**: каждая строка `[OK]`, `[WARN]` или `[FAIL]` с рекомендацией.
+3. Приложите **`diagnostic-report.txt`** (появится рядом с `DIAGNOSE.cmd` или на рабочем столе) к GitHub issue.
+
+DIAGNOSE работает **только на чтение**: не удаляет драйверы, не выключает VPN и другие программы, не меняет маршруты, не трогает Defender и не завершает процессы. Проверяет систему, файлы и хэши проекта, WinDivert (файлы, подпись, BFE, состояние драйвера, ошибки запуска, «осиротевшие» записи служб), подсказки Code Integrity / Defender / Smart App Control, конфликтующие программы (другой zapret, GoodbyeDPI, ExitLag, v2rayN/Xray TUN, WireGuard, OpenVPN, адаптеры Wintun/TAP), сеть (адаптеры, шлюз, MTU, маршруты по умолчанию, маршруты до ROTK, устаревшие persistent-маршруты) и задержку до ROTK (ICMP, хопы, пинг из игры). При запущенной игре 15-секундное наблюдение через `pktmon` показывает реальные адреса ROTK и покрыты ли они `filter.txt` (`ACTIVE ROTK ENDPOINT OUTSIDE CURRENT FILTER`).
+
+Отчёт безопасен для публикации: нет имени пользователя/ПК, SID, личных путей, публичных IP, IPv6, Steam ID, токенов, данных VLESS/Reality и ссылок подписок. Публичные IP маршрутизаторов провайдера маскируются (`a.b.x.x`), адреса серверов ROTK остаются видимыми. Сетевые пробы - только ICMP echo (до вашего шлюза и хостов ROTK); внешние сервисы не используются, ваш провайдер и публичный IP не определяются.
 
 ---
 
@@ -360,9 +387,14 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 ---
 
 ## Сравнение задержки и стабильности
-Результаты тестирования на прямом подключении Билайн из Москвы до OVH во Франции:
-* **Прямой обход (данный проект)**: пинг **55–61 мс** во время тестовых игровых сессий, существенно меньше джиттера. Потери пакетов в этих сессиях не наблюдались.
-* **Туннелирование (VLESS / VPN)**: базовый пинг ~60–80 мс с колебаниями и периодическими скачками задержки до 140–170 мс.
+**Задержка зависит от маршрутизации провайдера и сервера назначения.** Проект устраняет наблюдаемую проблему UDP-фильтрации, но не меняет физический/BGP-маршрут; локальный desync-профиль не может сделать маршрут короче. Конкретный пинг не гарантируется.
+
+Наблюдения при тестировании (прямой Ethernet, Москва, до OVH):
+* **Билайн, прямой обход**: стабильно ~55–61 ms в игре, потерь пакетов в тестовых сессиях не было.
+* **МТС, прямой обход**: подключение и игра работают; задержку показывает DIAGNOSE (ICMP-задержка маршрута, хопы и пинг из игры рядом).
+* **Туннелирование (VLESS / VPN)**: базовый пинг ~60–80 ms с колебаниями и периодическими скачками до 140–170 ms.
+
+Если пинг выше ожидаемого, запустите `DIAGNOSE.cmd` в лобби: он покажет, где лишняя задержка - на маршруте провайдера, из-за конфликта с VPN/TUN, устаревшего маршрута или другого сервера ROTK.
 
 ---
 
@@ -421,9 +453,24 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 ---
 
 ## Решение проблем
+**Первый шаг при любой проблеме: запустите `DIAGNOSE.cmd` от имени администратора** и выполните рекомендацию. `START.cmd` и авторежим тоже сохраняют точный код ошибки Windows, если `winws.exe` не смог запуститься.
+
+| Ошибка / вердикт | Что означает | Что делать |
+|---|---|---|
+| `2` / `3` + *Stale service* | Оставшаяся служба `WinDivert` от другой программы или старой копии указывает на удалённую папку | `sc delete WinDivert` в командной строке администратора (WinDivert создаст её заново) |
+| `5` Access denied | Нет прав администратора или антивирус блокирует драйверы | Запуск от администратора; проверить антивирус |
+| `225` / `226` | Антивирус заблокировал или удалил файл | Восстановить из карантина, добавить папку в исключения |
+| `577` Invalid image hash | Code Integrity отклонил подпись драйвера | Скачать заново; см. события Code Integrity в отчёте |
+| `654` Prior unload failed | Загружена другая версия WinDivert | Закрыть другие WinDivert-программы и перезагрузиться |
+| `1275` Driver blocked | Блоклист драйверов / Memory Integrity / политика безопасности | Пока политика активна, драйвер загрузить нельзя |
+| `1753` / BFE не запущен | Отключена служба Base Filtering Engine | Включить и запустить службу *Base Filtering Engine* |
+| `4551` / Smart App Control | Неподписанный `winws.exe` заблокирован WDAC / Smart App Control | Разрешить или выключить Smart App Control |
+| `TUN_ROUTE_CONFLICT` | Трафик ROTK уходит в VPN/TUN-адаптер | Добавить DIRECT-правила для `H1Z1.exe` / IP ROTK или выключить TUN |
+| `STALE_PERSISTENT_ROUTE` | Сохранённый маршрут указывает на шлюз старого роутера | Удалить или пересоздать маршрут с текущим шлюзом |
+| `ACTIVE ROTK ENDPOINT OUTSIDE CURRENT FILTER` | ROTK использует новый диапазон серверов | Открыть issue с отчётом; фильтр будет проверен и расширен |
+
 * **«Administrator privileges are required»**: Запустите скрипт через правый клик -> **Запуск от имени администратора**. Драйверу WinDivert требуются системные привилегии.
-* **В лобби пускает, а в катку нет («Waiting for world ready»)**: ROTK мог выделить сервер матча из нового пула IP, отличного от `162.19.126.0/24`. Проверьте лог игры (`H1Z1 PlayClient (Live).log`), найдите целевой IP/порт и откройте Issue на GitHub.
-* **`winws.exe` не запускается**: Другая программа перехвата пакетов (например, GoodbyeDPI или zapret для Discord) может удерживать драйвер. Остановите стороннюю утилиту или выполните `STOP.cmd`.
+* **В лобби пускает, а в катку нет («Waiting for world ready»)**: ROTK мог выделить сервер матча вне `162.19.126.0/24`. Запустите `DIAGNOSE.cmd`, пока игра висит: он покажет живые адреса и отметит те, что вне фильтра.
 * **Антивирус заблокировал или удалил файл**: Откройте историю защиты антивируса, сверьте хэш SHA-256 по таблице выше и добавьте рабочую папку в исключения.
 * **Как проверить статус работы**: Запустите **`STATUS.cmd`** для отображения состояния вотчера, игры, байпаса и службы драйвера.
 
@@ -441,7 +488,7 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 ## Системные требования и ограничения
 * **Операционная система**: Windows 10 или Windows 11 (64-бит).
 * **Права**: Права администратора для запуска драйвера ядра.
-* **Провайдер**: Проверено на оптоволоконном подключении Билайн из Москвы до OVH. На других маршрутах и у других операторов результаты, включая пинг, могут отличаться.
+* **Провайдер**: Изначально проверено на Билайне, затем на МТС в Москве. Маршрутизация и задержка у провайдеров различаются; проект решает проблему UDP-подключения к ROTK, а не ускоряет маршрут. Для всех провайдеров используется одна базовая стратегия; запасные профили появятся только при наличии доказательств из реальных отчётов.
 
 ---
 

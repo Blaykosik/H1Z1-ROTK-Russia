@@ -14,6 +14,11 @@ body:
         - Private keys or personal certificates
         - Full unedited log files containing personal account identifiers
 
+        ### 🩺 Diagnostics first
+        Right-click **DIAGNOSE.cmd** -> *Run as administrator* (ideally while H1Z1 is open in the lobby)
+        and attach the generated **diagnostic-report.txt** below. The report is sanitized automatically
+        (no user/PC names, personal paths, public IPs, tokens or VPN data).
+
   - type: input
     id: os_version
     attributes:
@@ -25,16 +30,16 @@ body:
   - type: input
     id: isp_name
     attributes:
-      label: Internet Service Provider (ISP) & City
-      placeholder: Beeline (Moscow)
+      label: Internet Service Provider (ISP) & City (optional)
+      placeholder: e.g. MTS (Moscow)
     validations:
-      required: true
+      required: false
 
   - type: input
     id: project_version
     attributes:
       label: Project Version
-      value: v1.2.1
+      value: v1.3.0
     validations:
       required: true
 
@@ -70,13 +75,13 @@ body:
       required: false
 
   - type: textarea
-    id: status_output
+    id: diagnostic_report
     attributes:
-      label: Output from STATUS.cmd
-      description: Run STATUS.cmd and paste the console output here.
+      label: diagnostic-report.txt
+      description: Run DIAGNOSE.cmd as administrator and paste the content of diagnostic-report.txt here.
       render: text
     validations:
-      required: false
+      required: true
 
   - type: textarea
     id: error_description
