@@ -5,8 +5,8 @@
 Local direct-connect fix for **H1Z1 Return of the King (ROTK)** in Russia.  
 Play with **native direct UDP** without VPNs, VLESS tunneling, VPS nodes, or remote relays.
 
-* **Current Stable**: `v1.3.0` (universal diagnostics / multi-ISP support)
-* **Download**: [Release v1.3.0 Archive](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.0) (`H1Z1-ROTK-Russia-v1.3.0.zip`)
+* **Current Stable**: `v1.3.1` (TRIOS connection fix / UDP 26xxx coverage)
+* **Download**: [Release v1.3.1 Archive](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.1) (`H1Z1-ROTK-Russia-v1.3.1.zip`)
 * **Something does not work?** Run `DIAGNOSE.cmd` and attach `diagnostic-report.txt` to your GitHub issue.
 
 ---
@@ -53,15 +53,15 @@ While tunneling through a VPS (VPN / VLESS) can bypass the blockage, it introduc
 ---
 
 ## Quick Start
-1. Download **`H1Z1-ROTK-Russia-v1.3.0.zip`** from [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.0).
+1. Download **`H1Z1-ROTK-Russia-v1.3.1.zip`** from [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.1).
 2. Extract the ZIP archive to any folder.
 3. Choose either **Auto Mode** (install once, fully automated) or **Manual Mode** (portable, no install).
 
 Verify the download checksum in PowerShell:
 ```powershell
-Get-FileHash .\H1Z1-ROTK-Russia-v1.3.0.zip -Algorithm SHA256
+Get-FileHash .\H1Z1-ROTK-Russia-v1.3.1.zip -Algorithm SHA256
 ```
-Expected SHA-256: `819242CF433573E6A0002EFF6CCEEB317F323D19EAF9E673249A08B223694E9A`
+Expected SHA-256: `282E8E450FD2A1C2F5196E969FF0DAC709DF485047EC1C859DEB4F1A19BBDABE`
 
 ---
 
@@ -72,6 +72,8 @@ Auto Mode installs the runtime to `%ProgramData%\H1Z1-ROTK-Russia` and sets up a
 * **Safe Driver Management**: WinDivert is unloaded when the game exits, unless other tools (like YouTube/Discord zapret) are also using it.
 * **Completely Headless**: Runs silently in the background with no console popups or system tray icons.
 * **Independent of Download Folder**: Once installed, you can safely move or delete the extracted ZIP folder!
+
+**Updating an existing Auto Mode installation:** close ROTK, extract the new release and run `INSTALL_AUTO.cmd` again as administrator. Updating the downloaded folder alone does not update the runtime installed in ProgramData.
 
 ### How to Install:
 1. Right-click **`INSTALL_AUTO.cmd`** and select **Run as administrator**.
@@ -129,11 +131,11 @@ H1Z1.exe (Game Client)
 ## Network Scope & Dynamic Match Servers
 The WinDivert filter string is strictly bounded to ROTK server infrastructure:
 ```text
-outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19.126.0 and ip.DstAddr <= 162.19.126.255)) and udp.DstPort >= 20000 and udp.DstPort <= 23000
+outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19.126.0 and ip.DstAddr <= 162.19.126.255)) and ((udp.DstPort >= 20000 and udp.DstPort <= 23000) or (udp.DstPort >= 26000 and udp.DstPort <= 26999))
 ```
 
 * **Login & Gateway**: `162.19.94.95` (ports `20042-20045`, `20140-20141`)
-* **Dynamic Match Server Pool**: `162.19.126.0/24` (ports `20000 - 23000`)
+* **Dynamic Match Server Pool**: `162.19.126.0/24` (ports `20000 - 23000` and `26000 - 26999`; TRIOS endpoints observed on ports 26204, 26216, 26222, 26238 and 26246)
 * **What is excluded**: Traffic outside the configured destination IP/protocol/port scope is excluded from this WinDivert filter (Discord, Steam, web browsers, DNS, other games).
 
 ---
@@ -222,7 +224,7 @@ All bundled third-party binaries are byte-for-byte unchanged from their document
 | `ACTIVE ROTK ENDPOINT OUTSIDE CURRENT FILTER` | ROTK uses a new server range | Open an issue with the report; the filter will be verified and extended |
 
 * **"Administrator privileges are required"**: Right-click the `.cmd` script and choose **Run as administrator**. WinDivert requires elevation to filter packets.
-* **Lobby connects, but Match loading hangs ("Waiting for world ready")**: ROTK might have allocated a match server outside `162.19.126.0/24`. Run `DIAGNOSE.cmd` while the game is stuck: it lists the live endpoints and flags any outside the filter.
+* **Lobby connects, but Match loading hangs ("Waiting for world ready")**: ROTK might have allocated a match server outside `162.19.126.0/24` or a port outside the filter's ranges. Before v1.3.1, TRIOS ports `26xxx` were not covered: the menu connected, but matchmaking ended in `DisconnectReasonTimeout`. Run `DIAGNOSE.cmd` while the game is stuck: it lists the live endpoints and flags any outside the filter.
 * **Antivirus quarantined a file**: Check your antivirus protection history, verify the file SHA-256 against the table above, and restore/exclude the file if verified.
 * **How to verify status**: Run **`STATUS.cmd`** to see whether the watcher, game, bypass, and driver are active.
 
@@ -300,15 +302,15 @@ This project is an independent community compatibility utility. It is **not** af
 ---
 
 ## Быстрый старт
-1. Скачайте архив **`H1Z1-ROTK-Russia-v1.3.0.zip`** со страницы [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.0).
+1. Скачайте архив **`H1Z1-ROTK-Russia-v1.3.1.zip`** со страницы [GitHub Releases](https://github.com/Blaykosik/H1Z1-ROTK-Russia/releases/tag/v1.3.1).
 2. Распакуйте архив в удобное место.
 3. Выберите подходящий режим: **Авторежим** (установка в один клик, полностью автоматическая работа) или **Ручной режим** (портативный запуск без установки).
 
 Проверка контрольной суммы архива в PowerShell:
 ```powershell
-Get-FileHash .\H1Z1-ROTK-Russia-v1.3.0.zip -Algorithm SHA256
+Get-FileHash .\H1Z1-ROTK-Russia-v1.3.1.zip -Algorithm SHA256
 ```
-Ожидаемый хэш SHA-256: `819242CF433573E6A0002EFF6CCEEB317F323D19EAF9E673249A08B223694E9A`
+Ожидаемый хэш SHA-256: `282E8E450FD2A1C2F5196E969FF0DAC709DF485047EC1C859DEB4F1A19BBDABE`
 
 ---
 
@@ -320,6 +322,8 @@ Get-FileHash .\H1Z1-ROTK-Russia-v1.3.0.zip -Algorithm SHA256
 * **Полная изоляция процессов**: скрипты завершают исключительно собственный PID `winws.exe`, проверяя полный путь к исполняемому файлу. Чужие копии `winws` никогда не затрагиваются.
 * **Работа без GUI**: служба работает полностью в фоне, не создавая окон консоли или значков в трее.
 * **Независимость от загрузок**: после установки скачанный архив и распакованную папку можно безопасно переместить или удалить!
+
+**Обновление установленного авторежима:** закройте ROTK, распакуйте новый релиз и повторно запустите `INSTALL_AUTO.cmd` от администратора. Обновление скачанной папки само по себе не обновляет рантайм в ProgramData.
 
 ### Инструкция по установке:
 1. Нажмите правой кнопкой мыши по **`INSTALL_AUTO.cmd`** и выберите **«Запуск от имени администратора»**.
@@ -377,11 +381,11 @@ H1Z1.exe (Игровой клиент)
 ## Область действия фильтра
 Фильтр WinDivert строго ограничен адресами игровой инфраструктуры ROTK:
 ```text
-outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19.126.0 and ip.DstAddr <= 162.19.126.255)) and udp.DstPort >= 20000 and udp.DstPort <= 23000
+outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19.126.0 and ip.DstAddr <= 162.19.126.255)) and ((udp.DstPort >= 20000 and udp.DstPort <= 23000) or (udp.DstPort >= 26000 and udp.DstPort <= 26999))
 ```
 
 * **Логин и шлюз**: `162.19.94.95` (порты `20042-20045`, `20140-20141`)
-* **Пул динамических серверов матчей**: `162.19.126.0/24` (порты `20000 - 23000`)
+* **Пул динамических серверов матчей**: `162.19.126.0/24` (порты `20000 - 23000` и `26000 - 26999`; в TRIOS наблюдались порты 26204, 26216, 26222, 26238 и 26246)
 * **Что не затрагивается**: Трафик, не соответствующий заданным IP-адресам, протоколу и диапазону портов, не попадает под этот WinDivert-фильтр (Discord, Steam, браузеры, DNS, другие игры).
 
 ---
@@ -470,7 +474,7 @@ outbound and ip and udp and (ip.DstAddr == 162.19.94.95 or (ip.DstAddr >= 162.19
 | `ACTIVE ROTK ENDPOINT OUTSIDE CURRENT FILTER` | ROTK использует новый диапазон серверов | Открыть issue с отчётом; фильтр будет проверен и расширен |
 
 * **«Administrator privileges are required»**: Запустите скрипт через правый клик -> **Запуск от имени администратора**. Драйверу WinDivert требуются системные привилегии.
-* **В лобби пускает, а в катку нет («Waiting for world ready»)**: ROTK мог выделить сервер матча вне `162.19.126.0/24`. Запустите `DIAGNOSE.cmd`, пока игра висит: он покажет живые адреса и отметит те, что вне фильтра.
+* **В лобби пускает, а в катку нет («Waiting for world ready»)**: ROTK мог выделить сервер матча вне `162.19.126.0/24` или порт вне диапазонов фильтра. До v1.3.1 порты TRIOS `26xxx` не покрывались: в меню пускало, но после поиска возникал `DisconnectReasonTimeout`. Запустите `DIAGNOSE.cmd`, пока игра висит: он покажет живые адреса и отметит те, что вне фильтра.
 * **Антивирус заблокировал или удалил файл**: Откройте историю защиты антивируса, сверьте хэш SHA-256 по таблице выше и добавьте рабочую папку в исключения.
 * **Как проверить статус работы**: Запустите **`STATUS.cmd`** для отображения состояния вотчера, игры, байпаса и службы драйвера.
 

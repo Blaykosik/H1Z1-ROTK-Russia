@@ -1,4 +1,4 @@
-# H1Z1 ROTK Russia - Privacy gate for diagnostic-report.txt (v1.3.0)
+# H1Z1 ROTK Russia - Privacy gate for diagnostic-report.txt (v1.3.1)
 #
 # 1. Runs the sanitizer self-test with planted secrets.
 # 2. Generates a real report on this machine (or scans -ReportPath) and searches it for

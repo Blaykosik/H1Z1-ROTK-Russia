@@ -26,12 +26,12 @@ exit /b 1
 set "TARGET_DIR=%ProgramData%\H1Z1-ROTK-Russia"
 set "TASK_NAME=H1Z1-ROTK-Russia Auto Mode"
 
-title H1Z1 ROTK Russia - Install Auto Mode (v1.3.0)
+title H1Z1 ROTK Russia - Install Auto Mode (v1.3.1)
 color 0B
 
 echo.
 echo ======================================================================
-echo        H1Z1 ROTK Russia - Install Auto Mode (v1.3.0)
+echo        H1Z1 ROTK Russia - Install Auto Mode (v1.3.1)
 echo ======================================================================
 echo.
 echo  Auto Mode features:
@@ -163,7 +163,7 @@ if exist "%SRC_ROOT%\LICENSES" xcopy /y /s /q "%SRC_ROOT%\LICENSES\*" "%TARGET_D
 goto configure_task
 
 :configure_task
-> "%TARGET_DIR%\VERSION.txt" echo v1.3.0
+> "%TARGET_DIR%\VERSION.txt" echo v1.3.1
 if exist "%TARGET_DIR%\.last_start_error.txt" del /f /q "%TARGET_DIR%\.last_start_error.txt" >nul 2>&1
 :: 4. Stop pre-existing task instance and any old watcher running from ProgramData
 echo  [*] Cleaning up any previous installation...

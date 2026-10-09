@@ -1,13 +1,13 @@
-﻿# Packaging script for H1Z1-ROTK-Russia v1.3.0
+# Packaging script for H1Z1-ROTK-Russia v1.3.1
 $ErrorActionPreference = "Stop"
 
 $repoRoot = (Resolve-Path "$PSScriptRoot\..").Path
 $distDir  = Join-Path $repoRoot "dist"
 $stageDir = Join-Path $distDir "stage\H1Z1-ROTK-Russia"
-$zipPath  = Join-Path $distDir "H1Z1-ROTK-Russia-v1.3.0.zip"
+$zipPath  = Join-Path $distDir "H1Z1-ROTK-Russia-v1.3.1.zip"
 
 Write-Host "=================================================="
-Write-Host " Building H1Z1-ROTK-Russia v1.3.0 Release ZIP"
+Write-Host " Building H1Z1-ROTK-Russia v1.3.1 Release ZIP"
 Write-Host "=================================================="
 
 # 1. Clean previous build artifacts
@@ -31,7 +31,7 @@ Copy-Item "$repoRoot\DIAGNOSE.cmd"       -Destination "$stageDir\DIAGNOSE.cmd"
 # Generate compact bilingual README.txt for the release ZIP
 $readmeTxt = @"
 ======================================================================
-               H1Z1 ROTK Russia - Direct UDP Bypass v1.3.0
+               H1Z1 ROTK Russia - Direct UDP Bypass v1.3.1
 ======================================================================
 
 QUICK START / БЫСТРЫЙ СТАРТ:
@@ -169,8 +169,8 @@ $zipHash = (Get-FileHash -Path $zipPath -Algorithm SHA256).Hash
 Write-Host "[*] Release ZIP SHA256: $zipHash"
 
 $sumsContent = @(
-    "# Release Archive (v1.3.0):",
-    "$zipHash  H1Z1-ROTK-Russia-v1.3.0.zip",
+    "# Release Archive (v1.3.1):",
+    "$zipHash  H1Z1-ROTK-Russia-v1.3.1.zip",
     "",
     "# Bundled Runtime Binaries (bin/):",
     "$((Get-FileHash "$repoRoot\bin\winws.exe" -Algorithm SHA256).Hash)  bin/winws.exe",

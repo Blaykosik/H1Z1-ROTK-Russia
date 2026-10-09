@@ -1,4 +1,4 @@
-# H1Z1 ROTK Russia - Self-Diagnostics Engine (v1.3.0)
+# H1Z1 ROTK Russia - Self-Diagnostics Engine (v1.3.1)
 #
 # READ-ONLY. This script never installs, stops or deletes drivers or services, never changes
 # routes, firewall, Defender or VPN settings and never terminates processes. It only observes
@@ -27,7 +27,7 @@ param(
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 
-$ProjectVersion = 'v1.3.0'
+$ProjectVersion = 'v1.3.1'
 $TaskName       = 'H1Z1-ROTK-Russia Auto Mode'
 $InstallDir     = Join-Path $env:ProgramData 'H1Z1-ROTK-Russia'
 $KnownLoginIP   = '162.19.94.95'
@@ -1351,7 +1351,7 @@ $fm = if ($rt) { Read-FilterModel $rt.Filter } else { Read-FilterModel '' }
 Out-Line '  filter.txt:' 'Gray'
 Out-Line ('    ' + $fm.Text) 'Gray'
 Out-KV 'Known login/gateway' "$KnownLoginIP (UDP 20042-20045, 20140-20141)"
-Out-KV 'Known match pool' '162.19.126.0/24 (UDP 20000-23000)'
+Out-KV 'Known match pool' '162.19.126.0/24 (UDP 20000-23000, 26000-26999)'
 $capture = $null
 if ($game.Count -gt 0 -and -not $NoCapture -and $script:IsAdmin) {
     Out-Line ''

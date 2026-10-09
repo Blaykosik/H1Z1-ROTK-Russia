@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-title H1Z1 ROTK Russia - Diagnostics (v1.3.0)
+title H1Z1 ROTK Russia - Diagnostics (v1.3.1)
 color 0B
 
 :: Locate the diagnostics engine: release (_runtime), Auto Mode install, or repository layout.

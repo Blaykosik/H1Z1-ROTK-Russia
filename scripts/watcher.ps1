@@ -1,4 +1,4 @@
-# H1Z1 ROTK Russia - Event-Driven Process Watcher (v1.3.0)
+# H1Z1 ROTK Russia - Event-Driven Process Watcher (v1.3.1)
 # Automatically manages the life-cycle of the direct UDP bypass based on H1Z1.exe.
 # Strictly isolated: only controls this project's own winws instance; never touches unrelated tools.
 

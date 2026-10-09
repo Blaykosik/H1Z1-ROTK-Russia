@@ -63,7 +63,7 @@ goto layout_resolved
 set "PID_FILE=%BIN_DIR%\.winws.pid"
 set "EXPECTED_EXE=%BIN_DIR%\winws.exe"
 
-title H1Z1 ROTK Russia - Direct UDP Bypass v1.3.0 (Portable)
+title H1Z1 ROTK Russia - Direct UDP Bypass v1.3.1 (Portable)
 color 0A
 
 :: 3. Verify presence of required runtime files
@@ -114,14 +114,14 @@ if exist "%PID_FILE%" del /f /q "%PID_FILE%" >nul 2>&1
 :do_start
 echo.
 echo ======================================================================
-echo        H1Z1 ROTK Russia - Direct UDP Bypass v1.3.0 (Portable)
+echo        H1Z1 ROTK Russia - Direct UDP Bypass v1.3.1 (Portable)
 echo ======================================================================
 echo.
 echo  [*] Mode              : Portable (runs directly from this folder)
 echo  [*] Target Scope:
 echo      - Login / Gateway : 162.19.94.95
 echo      - Match Servers   : 162.19.126.0/24 [162.19.126.0 - 162.19.126.255]
-echo      - Protocol / Ports: UDP 20000 - 23000
+echo      - Protocol / Ports: UDP 20000 - 23000, 26000 - 26999
 echo.
 echo  [*] Network Profile   : Native Direct UDP [No VPN / No Proxy / No Relay]
 echo  [*] Desync Method     : Single-packet STUN prefix [cutoff=d2]

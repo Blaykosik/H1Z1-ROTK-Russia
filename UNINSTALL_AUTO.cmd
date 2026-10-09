@@ -26,12 +26,12 @@ set "TARGET_DIR=%ProgramData%\H1Z1-ROTK-Russia"
 set "TASK_NAME=H1Z1-ROTK-Russia Auto Mode"
 set "SCRIPT_DIR=%~dp0"
 
-title H1Z1 ROTK Russia - Uninstall Auto Mode (v1.3.0)
+title H1Z1 ROTK Russia - Uninstall Auto Mode (v1.3.1)
 color 0C
 
 echo.
 echo ======================================================================
-echo       H1Z1 ROTK Russia - Uninstall Auto Mode (v1.3.0)
+echo       H1Z1 ROTK Russia - Uninstall Auto Mode (v1.3.1)
 echo ======================================================================
 echo.
 
